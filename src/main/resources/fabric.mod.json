@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "riftkingextras",
+  "version": "${version}",
+  "name": "RiftKingExtras",
+  "description": "Client-side extras for Hypixel SkyBlock: multi-collection tracker HUD with player comparison and a mushroom helper.",
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["de.example.riftkingextras.RiftKingExtrasClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.1",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
