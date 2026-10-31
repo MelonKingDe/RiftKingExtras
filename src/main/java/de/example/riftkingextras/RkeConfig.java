@@ -16,7 +16,7 @@ public final class RkeConfig {
     public static final int MAX_PLAYERS = 6;
 
     public static int hudX = 8, hudY = 8;
-    public static volatile float hudScale = 1.0f; // 0.5 .. 2.0
+    public static volatile float hudScale = 1.0f; // 0.25 .. 2.0
 
     // Second HUD: Minion Time Warp cooldown
     public static int twX = 8, twY = 130;
@@ -63,9 +63,9 @@ public final class RkeConfig {
                 Data d = GSON.fromJson(Files.readString(FILE), Data.class);
                 if (d != null) {
                     hudX = d.hudX; hudY = d.hudY; showTimers = d.showTimers;
-                    if (d.hudScale >= 0.5f && d.hudScale <= 2.0f) hudScale = d.hudScale;
+                    if (d.hudScale >= 0.25f && d.hudScale <= 2.0f) hudScale = d.hudScale;
                     twX = d.twX; twY = d.twY; showTimewarp = d.showTimewarp; timewarpEndMs = d.timewarpEndMs;
-                    if (d.twScale >= 0.5f && d.twScale <= 2.0f) twScale = d.twScale;
+                    if (d.twScale >= 0.25f && d.twScale <= 2.0f) twScale = d.twScale;
                     if (d.timewarpMessage != null && !d.timewarpMessage.isBlank()) timewarpMessage = d.timewarpMessage;
                     if (d.playerSlug != null) playerSlug = d.playerSlug;
                     if (d.apiBase != null && !d.apiBase.isBlank()) apiBase = d.apiBase;

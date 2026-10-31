@@ -22,7 +22,9 @@ public final class TrackedCollection {
     // --- runtime ---
     private transient volatile long apiValue = -1; // last value from Elite
     private transient volatile long pending = 0;   // counted locally, Elite does not know it yet
-    private transient volatile long sessionGain = 0;
+    private transient volatile long sessionGain = 0; // everything gained this session (shown as +N)
+    private transient volatile long localGain = 0;   // only what was seen entering the inventory (used for items/hour)
+    private transient boolean syncedThisSession = false;
     transient int lastInvCount = -1;
     private transient final RateTimer timer = new RateTimer(); // own rate timer with auto pause
 
@@ -105,6 +107,7 @@ public final class TrackedCollection {
 
     void onPickup(long diff) {
         sessionGain += diff;
+        localGain += diff;
         pending += diff;
         timer.onGain(); // a gain starts or resumes the rate timer
     }
@@ -123,8 +126,12 @@ public final class TrackedCollection {
         if (newRank >= 0) rank = (int) newRank;
         if (value >= 0) {
             long shown = total();
+            // Elite is higher than what we counted: gained without seeing it enter the inventory
+            // (minion menu, sacks, e.g. 1 Hemoglass = 160 Hemovibe). It belongs in the +N of this session.
+            if (syncedThisSession && shown >= 0 && value > shown) sessionGain += value - shown;
             apiValue = value;
             pending = shown < 0 ? 0 : Math.max(0, shown - value);
+            syncedThisSession = true;
         }
         calibratedMs = System.currentTimeMillis();
     }
@@ -140,7 +147,14 @@ public final class TrackedCollection {
     /** Items per hour of rate-timer uptime (paused time is not counted). */
     long perHour() {
         double hours = timer.uptime() / 3_600_000.0;
-        return hours < 0.01 ? 0 : (long) (sessionGain / hours);
+        return hours < 0.01 ? 0 : (long) (localGain / hours);
+    }
+
+    /** Clears this session's gain and timer (the shown total stays). */
+    void resetSession() {
+        sessionGain = 0;
+        localGain = 0;
+        timer.reset();
     }
 
     long uptime() { return timer.uptime(); }

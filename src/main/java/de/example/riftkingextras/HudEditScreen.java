@@ -128,9 +128,9 @@ public class HudEditScreen extends Screen {
         }
     }
 
-    /** Slider for the HUD size: 50% to 200% in 5% steps. */
+    /** Slider for the HUD size: 25% to 200% in 5% steps. */
     private static class ScaleSlider extends AbstractSliderButton {
-        private static final float MIN = 0.5f, MAX = 2.0f;
+        private static final float MIN = 0.25f, MAX = 2.0f;
         private final HudKind kind;
         private final Runnable onChange;
 

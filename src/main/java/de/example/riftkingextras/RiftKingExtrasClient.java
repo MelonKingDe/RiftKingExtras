@@ -16,6 +16,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 public class RiftKingExtrasClient implements ClientModInitializer {
@@ -40,14 +44,9 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(MOD_ID, "scoreboard"),
                 (graphics, tracker) -> ScoreboardHud.render(graphics));
         if (ScoreboardConfig.hideVanilla) { // set "hideVanilla": false in the scoreboard config to skip this
-            try {
-                HudElementRegistry.replaceElement(Identifier.withDefaultNamespace("scoreboard_sidebar"),
-                        original -> (graphics, tracker) -> {
-                            if (!ScoreboardHud.hidesVanilla()) ScoreboardHud.callOriginal(original, graphics, tracker);
-                        });
-            } catch (RuntimeException e) {
-                // if the sidebar element is not found, the vanilla scoreboard simply stays visible
-            }
+            hookVanillaSidebar();
+        } else {
+            ScoreboardHud.setHookInfo("off (hideVanilla is false in the config)");
         }
 
         // The Time Warp message arrives as a game (system) message: start the 48 h countdown
@@ -75,6 +74,38 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         registerCommands();
     }
 
+    /** Finds the id of the vanilla sidebar HUD element and replaces it with one that hides itself when needed. */
+    private void hookVanillaSidebar() {
+        // The constant is looked up by name, so it works whatever it is called in this Fabric API version
+        List<Identifier> ids = new ArrayList<>();
+        for (Field f : VanillaHudElements.class.getFields()) {
+            if (f.getType() == Identifier.class && f.getName().toUpperCase(Locale.ROOT).contains("SCOREBOARD")) {
+                try {
+                    Identifier id = (Identifier) f.get(null);
+                    if (f.getName().toUpperCase(Locale.ROOT).contains("SIDEBAR")) ids.add(0, id);
+                    else ids.add(id);
+                } catch (IllegalAccessException ignored) {
+                    // skip this field
+                }
+            }
+        }
+        ids.add(Identifier.withDefaultNamespace("scoreboard"));
+        ids.add(Identifier.withDefaultNamespace("scoreboard_sidebar"));
+
+        for (Identifier id : ids) {
+            try {
+                HudElementRegistry.replaceElement(id, original -> (graphics, tracker) -> {
+                    if (!ScoreboardHud.hidesVanilla()) ScoreboardHud.callOriginal(original, graphics, tracker);
+                });
+                ScoreboardHud.setHookInfo("hooked " + id);
+                return;
+            } catch (RuntimeException e) {
+                // wrong id: try the next one
+            }
+        }
+        ScoreboardHud.setHookInfo("FAILED: no vanilla sidebar element found, the vanilla scoreboard stays visible");
+    }
+
     private void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(ClientCommands.literal("rke")
@@ -87,6 +118,18 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                 .executes(ctx -> openScreen(TrackedPlayersScreen::new)))
                         .then(ClientCommands.literal("scoreboard")
                                 .executes(ctx -> openScreen(ScoreboardScreen::new))
+                                .then(ClientCommands.literal("status").executes(ctx -> {
+                                    ctx.getSource().sendFeedback(Component.literal("Vanilla sidebar: " + ScoreboardHud.hookInfo()
+                                            + " | hidden now: " + ScoreboardHud.hidesVanilla()));
+                                    return 1;
+                                }))
+                                .then(ClientCommands.literal("dump").executes(ctx -> {
+                                    var source = ctx.getSource();
+                                    for (String line : ScoreboardHud.dump(Minecraft.getInstance())) {
+                                        source.sendFeedback(Component.literal(line));
+                                    }
+                                    return 1;
+                                }))
                                 .then(ClientCommands.literal("hud")
                                         .executes(ctx -> openScreen(p -> new HudEditScreen(p, HudKind.SCOREBOARD)))))
                         .then(ClientCommands.literal("timewarp")
@@ -97,9 +140,22 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                     ctx.getSource().sendFeedback(Component.literal("Timewarp cooldown started (48 h)."));
                                     return 1;
                                 }))
+                                .then(ClientCommands.literal("last").executes(ctx -> {
+                                    String line = TimewarpTracker.lastWarpLine();
+                                    ctx.getSource().sendFeedback(Component.literal(line.isEmpty()
+                                            ? "No chat line with \"warped time\" seen yet."
+                                            : "Last seen: " + line));
+                                    return 1;
+                                }))
                                 .then(ClientCommands.literal("reset").executes(ctx -> {
                                     TimewarpTracker.reset();
                                     ctx.getSource().sendFeedback(Component.literal("Timewarp cooldown cleared."));
+                                    return 1;
+                                })))
+                        .then(ClientCommands.literal("session")
+                                .then(ClientCommands.literal("reset").executes(ctx -> {
+                                    CollectionTracker.resetSession();
+                                    ctx.getSource().sendFeedback(Component.literal("Session gain and timers cleared."));
                                     return 1;
                                 })))
                         .then(ClientCommands.literal("sync").executes(ctx -> {

@@ -41,6 +41,15 @@ final class RateTimer {
         }
     }
 
+    /** Back to the start: no gain seen yet, both timers at zero. */
+    void reset() {
+        uptimeMs = 0;
+        downtimeMs = 0;
+        started = false;
+        active = false;
+        idleMs = 0;
+    }
+
     /** Forget the tick clock (e.g. when leaving the world) so the time away is not counted. */
     void resetClock() {
         lastTickMs = 0;

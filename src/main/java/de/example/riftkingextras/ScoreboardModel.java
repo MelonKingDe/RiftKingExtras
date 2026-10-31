@@ -7,6 +7,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 
 import java.text.NumberFormat;
+import java.text.Normalizer;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -48,9 +49,33 @@ final class ScoreboardModel {
             "Event", "Dark Auction", "Jacob's Contest", "Election", "Fishing Festival", "Spooky Festival",
             "Season of Jerry", "New Year", "Starting in", "Mining Fiesta", "Carnival", "Kuudra", "Dojo"};
 
+    private static final String SMALL_CAPS =
+            "\u1D00\u0299\u1D04\u1D05\u1D07\uA730\u0262\u029C\u026A\u1D0A\u1D0B\u029F\u1D0D\u0274\u1D0F\u1D18"
+                    + "\u01EB\u0280\uA731\u1D1B\u1D1C\u1D20\u1D21x\u028F\u1D22";
+    private static final String LATIN = "abcdefghijklmnopqrstuvwxyz";
+
     private ScoreboardModel() {}
 
     // ---------- classification ----------
+
+    /**
+     * The text of a scoreboard line as plain, normal text: color codes that are part of the text are removed,
+     * fancy letters (small caps, full width, math fonts) become normal letters, odd spaces become spaces.
+     * Hypixel puts such characters into its lines, so matching on the raw text misses them.
+     */
+    static String plain(Component line) {
+        String s = line.getString();
+        s = s.replaceAll("\u00A7.", "");                  // legacy color codes inside the text
+        s = Normalizer.normalize(s, Normalizer.Form.NFKC);
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            int small = SMALL_CAPS.indexOf(c);
+            sb.append(small >= 0 ? LATIN.charAt(small) : c);
+        }
+        s = sb.toString().replaceAll("[\\p{Cf}\\u00A0\\u2007\\u202F]", " "); // invisible and non-breaking chars
+        return s.strip();
+    }
 
     /** The element a (non-empty) line belongs to, or null if it matches nothing known. */
     static SbElement classify(String plain) {
@@ -168,7 +193,7 @@ final class ScoreboardModel {
         Map<SbElement, List<Component>> groups = new EnumMap<>(SbElement.class);
         SbElement blockKind = null;
         for (Component c : board) {
-            String plain = c.getString().trim();
+            String plain = plain(c);
             if (plain.isEmpty()) {
                 blockKind = null;
                 continue;

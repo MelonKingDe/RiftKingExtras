@@ -10,15 +10,31 @@ import java.util.Locale;
 public final class TimewarpTracker {
     static final long COOLDOWN_MS = 48L * 60 * 60 * 1000;
 
+    /** Hypixel puts this in front of the message: "TIME WARP! You have successfully warped time for your Minions!" */
+    private static final String PREFIX = "time warp!";
+
     private static long lastStartMs = 0;
+    private static volatile String lastWarpLine = "";
 
     private TimewarpTracker() {}
 
-    /** Called for every game chat message. Only a message that STARTS with the phrase counts (no player chat). */
+    /**
+     * Called for every game chat message. The message counts if it starts with the phrase, after the optional
+     * "TIME WARP!" prefix. Player chat is prefixed with a name, so it never matches. The Chocolate Factory and
+     * Aging Items messages do not contain "minion" and are ignored.
+     */
     static void onChat(String plainMessage) {
         if (plainMessage == null) return;
         String text = plainMessage.trim().toLowerCase(Locale.ROOT);
+        if (text.contains("warped time")) lastWarpLine = plainMessage.trim(); // for /rke timewarp last
+
+        if (text.startsWith(PREFIX)) text = text.substring(PREFIX.length()).trim();
         if (text.startsWith(RkeConfig.timewarpMessage.trim().toLowerCase(Locale.ROOT))) start();
+    }
+
+    /** The last chat line that contained "warped time" (shown by /rke timewarp last), to check what the mod sees. */
+    static String lastWarpLine() {
+        return lastWarpLine;
     }
 
     /** Starts a fresh 48 h cooldown from now. */

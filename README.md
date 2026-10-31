@@ -10,7 +10,10 @@ Extras for Hypixel SkyBlock:
   blue, Half Eaten Carrot orange, Wilted Berberis brown, Agaricus Cap light red. Every other collection gets a stable
   color made from its name; to pick your own, set `"color": "#FF8800"` for that collection in
   `config/riftkingextras.json`. A thin line at the bottom of each card shows how much time is left until the rate timer
-  pauses. Position **and size** (50% to 200%) are set under Move HUD (`/rke hud`).
+  pauses. Position **and size** (25% to 200%) are set under Move HUD (`/rke hud`).
+- **Gains you did not see:** when the Elite value is higher than what the mod counted (e.g. items taken out of a minion
+  menu, or 1 Hemoglass = 160 Hemovibe), the difference is added to the green +N of the session. Items per hour still
+  uses only what was seen entering the inventory.
 - **Rate timer with auto pause:** the items/hour value is calculated from the time the timer was actually running.
   Each collection has its own timer: the first gain starts it, and it pauses automatically after 60 seconds without a
   gain. The next gain resumes it. Every collection shows **Up** (time the timer was running), **Down** (time it was
@@ -24,8 +27,11 @@ Extras for Hypixel SkyBlock:
   warped time for your Minion" appears, a **48 hour real-time countdown** starts. The HUD shows the remaining time, when
   it is ready again (your local time), a progress bar and a pulsing READY when you can use it again. The end time is
   saved, so the countdown keeps running while the game is closed. It has its own position and size (`/rke timewarp hud`)
-  and can be switched off in the settings. Only a message that *starts* with the phrase counts, so other players cannot
-  trigger it by typing it. The phrase can be changed with `timewarpMessage` in the config. If you missed the message:
+  and can be switched off in the settings. The message on Hypixel is "TIME WARP! You have successfully warped time for
+  your Minions!" (the Enchanted Clock sends the same line for the Chocolate Factory and Aging Items, those are ignored).
+  The "TIME WARP!" prefix is skipped, then the message has to *start* with the phrase, so other players cannot trigger it
+  by typing it in chat. The phrase can be changed with `timewarpMessage` in the config. `/rke timewarp last` shows the
+  last chat line the mod saw that contained "warped time", to check what arrives. If you missed the message:
   `/rke timewarp start` starts the timer by hand, `/rke timewarp reset` clears it.
 - **Scoreboard HUD:** the Hypixel SkyBlock sidebar redrawn in the same style as the other HUDs (dark rounded panel,
   title in the header, accent colored line, thin separators). The vanilla sidebar is hidden while it is shown.
@@ -36,8 +42,10 @@ Extras for Hypixel SkyBlock:
   - Custom title and custom footer with `&` color codes, accent color, text shadow, text and title alignment, line
     spacing, hiding separators at the start/end, condensing consecutive separators.
   - Hide it while Tab, chat or F3 is open. "Outside SkyBlock" restyles other scoreboards too.
-  - Position and size (50% to 200%) with `/rke scoreboard hud`; without a saved position it sits at the right edge,
+  - Position and size (25% to 200%) with `/rke scoreboard hud`; without a saved position it sits at the right edge,
     vertically centered. While you are not on SkyBlock, the editor shows a sample board.
+  - The mod finds the vanilla sidebar HUD element by itself; `/rke scoreboard status` shows what it hooked.
+    `/rke scoreboard dump` lists the lines it reads, with the element each one was sorted into.
   - If the vanilla sidebar was visible at startup although "Hide vanilla one" is ON, or the game stops at startup with an
     error mentioning `scoreboard_sidebar`, set `"hideVanilla": false` in `config/riftkingextras-scoreboard.json`.
     Turning the option ON again needs a game restart (turning it OFF works immediately).
@@ -69,6 +77,9 @@ For any other collection, list the items in `itemNames` of that collection in `c
 /rke players         add or remove tracked players
 /rke hud             move the HUD
 /rke scoreboard      scoreboard settings
+/rke scoreboard dump  show the sidebar lines the mod reads and how it sorts them (for debugging)
+/rke scoreboard status  show how the vanilla sidebar was hooked
+/rke session reset   clear the session gain and all timers (they otherwise only reset when the game restarts)
 /rke scoreboard hud  move and resize the scoreboard HUD
 /rke sync            sync with Elite right now
 /rke test            show the raw Elite responses for every collection (for debugging)

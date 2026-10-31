@@ -108,7 +108,7 @@ public final class ScoreboardConfig {
                     titleAlign = Math.max(0, Math.min(2, d.titleAlign));
                     lineSpacing = Math.max(0, Math.min(6, d.lineSpacing));
                     x = d.x; y = d.y;
-                    if (d.scale >= 0.5f && d.scale <= 2.0f) scale = d.scale;
+                    if (d.scale >= 0.25f && d.scale <= 2.0f) scale = d.scale;
                     if (d.accent != null) accent = d.accent;
                     if (d.customTitle != null) customTitle = d.customTitle;
                     if (d.customFooter != null) customFooter = d.customFooter;

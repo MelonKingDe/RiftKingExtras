@@ -53,6 +53,12 @@ public final class CollectionTracker {
         if (++ticks % 600 == 0) persist(); // save about every 30 seconds
     }
 
+    /** Clears the session gain and all timers (also the overall timer). */
+    static void resetSession() {
+        for (TrackedCollection c : RkeConfig.collections) c.resetSession();
+        OVERALL.reset();
+    }
+
     static void persist() {
         RkeConfig.save();
     }

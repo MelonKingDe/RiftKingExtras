@@ -18,6 +18,7 @@ public final class ScoreboardHud {
     private static ScoreboardModel.Snapshot demo = null;
     private static int ticks = 0;
     private static Method hudElementMethod = null;
+    private static volatile String hookInfo = "not registered yet";
 
     private ScoreboardHud() {}
 
@@ -61,6 +62,15 @@ public final class ScoreboardHud {
 
     // ---------- vanilla sidebar ----------
 
+    /** Describes how the vanilla sidebar was hooked (shown by /rke scoreboard status). */
+    static String hookInfo() {
+        return hookInfo;
+    }
+
+    static void setHookInfo(String info) {
+        hookInfo = info;
+    }
+
     /** True while this HUD takes the place of the vanilla sidebar. */
     static boolean hidesVanilla() {
         return ScoreboardConfig.enabled && ScoreboardConfig.hideVanilla && snapshot != null;
@@ -84,6 +94,31 @@ public final class ScoreboardHud {
         } catch (Throwable ignored) {
             // if the vanilla element cannot be drawn, it simply stays hidden
         }
+    }
+
+    /** Lines for /rke scoreboard dump: what the mod reads from the sidebar and how it sorts each line. */
+    static java.util.List<String> dump(Minecraft mc) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        ScoreboardReader.Board board = ScoreboardReader.read(mc);
+        if (board == null) {
+            out.add("No sidebar scoreboard.");
+            return out;
+        }
+        out.add("Title: " + board.title().getString());
+        int i = 1;
+        for (Component line : board.lines()) {
+            String raw = line.getString();
+            StringBuilder shown = new StringBuilder();
+            for (int k = 0; k < raw.length(); k++) {
+                char c = raw.charAt(k);
+                if (c >= 32 && c < 127) shown.append(c);
+                else shown.append(String.format("\\u%04X", (int) c));
+            }
+            String plain = ScoreboardModel.plain(line);
+            SbElement kind = plain.isEmpty() ? SbElement.SEPARATOR : ScoreboardModel.classify(plain);
+            out.add(i++ + ": [" + (kind == null ? "OTHER" : kind.name()) + "] " + shown);
+        }
+        return out;
     }
 
     // ---------- drawing ----------
