@@ -58,7 +58,7 @@ public final class InventoryHud {
     }
 
     static boolean hidesHotbar() { return RkeConfig.hideHotbar && isShowing(); }
-    static boolean hidesStatusBars() { return RkeConfig.hideStatusBars && isShowing(); }
+    static boolean hidesStatusBars() { return RkeConfig.hideVanillaBars && isShowing(); }
 
     // ---------- data ----------
 
@@ -171,10 +171,10 @@ public final class InventoryHud {
 
         // health and mana bars
         int barW = (W - 2 * PAD - 6) / 2;
-        bar(g, font, PAD, PAD, barW, StatsTracker.healthFrac(),
-                StatsTracker.health < 0 ? "-" : fmt(StatsTracker.health) + "/" + fmt(StatsTracker.maxHealth), HEALTH);
-        bar(g, font, PAD + barW + 6, PAD, barW, StatsTracker.manaFrac(),
-                StatsTracker.mana < 0 ? "-" : fmt(StatsTracker.mana) + "/" + fmt(StatsTracker.maxMana), MANA);
+        StatsTracker.BarInfo health = StatsTracker.healthBar(mc);
+        StatsTracker.BarInfo mana = StatsTracker.manaBar();
+        bar(g, font, PAD, PAD, barW, health.frac(), health.text(), HEALTH);
+        bar(g, font, PAD + barW + 6, PAD, barW, mana.frac(), mana.text(), MANA);
 
         // equipment (left) and armor (right): four slots, the last one in the hotbar row
         for (int k = 0; k < 4; k++) {
@@ -204,8 +204,8 @@ public final class InventoryHud {
         g.text(font, damage, W - PAD - font.width(damage), BOTTOM_Y + 2, 0xFFFF8080, true);
         int riftX = PAD + 46;
         int riftW = W - 2 * PAD - 92;
-        bar(g, font, riftX, BOTTOM_Y, riftW, StatsTracker.riftFrac(),
-                StatsTracker.riftText.isEmpty() ? "-" : StatsTracker.riftText, RIFT);
+        StatsTracker.BarInfo rift = StatsTracker.riftBar(mc);
+        bar(g, font, riftX, BOTTOM_Y, riftW, rift.frac(), rift.text(), RIFT);
     }
 
     private static String fmt(long v) {

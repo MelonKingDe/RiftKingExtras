@@ -27,7 +27,7 @@ public class InventoryHudScreen extends Screen {
         toggle(x, y, w, "Inventory HUD", () -> RkeConfig.invEnabled, v -> RkeConfig.invEnabled = v);
         toggle(x, y + step, w, "Only on SkyBlock", () -> RkeConfig.invOnlySkyBlock, v -> RkeConfig.invOnlySkyBlock = v);
         toggle(x, y + step * 2, w, "Hide vanilla hotbar", () -> RkeConfig.hideHotbar, v -> RkeConfig.hideHotbar = v);
-        toggle(x, y + step * 3, w, "Hide vanilla health/xp bars", () -> RkeConfig.hideStatusBars, v -> RkeConfig.hideStatusBars = v);
+        toggle(x, y + step * 3, w, "Hide hearts, xp bar, action bar", () -> RkeConfig.hideVanillaBars, v -> RkeConfig.hideVanillaBars = v);
         toggle(x, y + step * 4, w, "Rarity frames", () -> RkeConfig.rarityBorders, v -> RkeConfig.rarityBorders = v);
 
         this.addRenderableWidget(Button.builder(Component.literal("Move inventory HUD"),

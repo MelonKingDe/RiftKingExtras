@@ -54,9 +54,9 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(MOD_ID, "inventory"),
                 (graphics, tracker) -> InventoryHud.render(graphics));
         InventoryHud.setHookInfo("hotbar: " + hookVanilla(n -> n.equals("HOTBAR"), InventoryHud::hidesHotbar)
-                + " | status bars: " + hookVanilla(
-                n -> n.equals("HEALTH_BAR") || n.equals("ARMOR_BAR") || n.equals("FOOD_BAR") || n.equals("AIR_BAR")
-                        || n.equals("MOUNT_HEALTH") || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL"),
+                + " | hearts, xp, action bar: " + hookVanilla(
+                n -> n.equals("HEALTH_BAR") || n.equals("ARMOR_BAR") || n.equals("FOOD_BAR") || n.equals("MOUNT_HEALTH")
+                        || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL") || n.equals("OVERLAY_MESSAGE"),
                 InventoryHud::hidesStatusBars));
 
         // Game messages: action bar (overlay) feeds the stats bars, normal chat feeds the Time Warp countdown
@@ -79,6 +79,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             ScoreboardHud.tick(client);
             SkyBlockState.tick(client);
             StatsTracker.tick(client);
+            ActionBarReader.tick(client);
             InventoryHud.tick(client);
             MushroomBreaker.tick(client);
         });

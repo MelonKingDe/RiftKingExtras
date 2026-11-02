@@ -55,10 +55,14 @@ Extras for Hypixel SkyBlock:
   - Every item gets a **1 pixel frame in its rarity color** (taken from the rarity line of the item lore: common,
     uncommon, rare, epic, legendary, mythic, divine, special, very special, ultimate ...). The frame goes around the item
     slot, it does not follow the shape of the item texture.
-  - It **hides the vanilla hotbar** while it is shown (option, on by default); the vanilla health/armor/food/xp bars can
-    be hidden too (option, off by default). It only shows on SkyBlock unless you switch that off.
-  - Health, mana and rift time are read from the action bar, speed and rift damage from the tab list, so a wrong format
-    only shows "-". `/rke stats` shows what was read and what arrives.
+  - It **hides the vanilla hotbar** while it is shown (option, on by default). A second option (also on by default)
+    hides the vanilla hearts, armor and food bars, the xp bar with its level number and the action bar. It only shows on
+    SkyBlock unless you switch that off.
+  - Mana and rift time are read from the action bar ("214/214 Mana", "73m16s Left"), speed and rift damage from the
+    tab list. In the Rift the health is not in the action bar, so the bar shows your vanilla hearts (15 hearts = 15/15);
+    on the other islands it uses the real health from the action bar. A wrong format only shows "-".
+    The action bar is read directly from the game, so hiding it does not stop the mod from reading it.
+    `/rke stats` shows what was read and what arrives.
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
     (`/equipment`) is open and remembers it until you close the game.
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
