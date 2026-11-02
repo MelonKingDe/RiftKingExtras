@@ -15,7 +15,7 @@ import java.util.Locale;
  * an overall timer and an optional table of tracked players. Drawn at HUD scale RkeConfig.hudScale.
  */
 public final class TrackerHud {
-    private static final int PANEL_W = 200, TABLE_W = 280;
+    private static final int PANEL_W = 200;
     static final int PAD = 5;
     static final int HEADER_H = 15;
     private static final int CARD_H = 27, CARD_H_TIMERS = 38, GAP = 3;
@@ -46,7 +46,7 @@ public final class TrackerHud {
     }
 
     static int width() {
-        return hasTable() ? TABLE_W : PANEL_W;
+        return hasTable() ? Math.max(PANEL_W, tableLayout(Minecraft.getInstance().font, rows()).width()) : PANEL_W;
     }
 
     static int height() {
@@ -229,48 +229,88 @@ public final class TrackerHud {
         g.text(font, "Down " + fmtTime(all.downtime()), cx + 108, cy + 3, RED, false);
     }
 
+    /** One row of the player table, with all texts already formatted. */
+    private record Row(String name, TrackedCollection coll, String collName, String amount, String rank,
+                       String diff, int diffColor, boolean hasData) {}
+
+    /** Column positions: every column is as wide as its widest text, so the columns never overlap. */
+    private record TableLayout(int collX, int amountRight, int rankRight, int diffRight, int width) {}
+
+    private static List<Row> rows() {
+        List<Row> out = new ArrayList<>();
+        for (TrackedPlayers.Info info : TrackedPlayers.infos()) {
+            TrackedCollection coll = CollectionTracker.bySlug(info.slug); // the collection of this player
+            String name = info.name.length() > 12 ? info.name.substring(0, 12) : info.name;
+            String collName = coll == null ? "-" : (coll.name.length() > 12 ? coll.name.substring(0, 12) : coll.name);
+
+            if (info.amount >= 0) {
+                long theirs = Math.round(info.amount);
+                long own = coll == null ? -1 : coll.total();
+                String diff = "-";
+                int diffColor = MUTED;
+                if (own >= 0) {
+                    long d = own - theirs;
+                    diff = (d >= 0 ? "+" : "-") + fmt(Math.abs(d)); // + = you are ahead
+                    diffColor = d >= 0 ? GREEN : RED;
+                }
+                out.add(new Row(name, coll, collName, fmt(theirs), info.rank > 0 ? "#" + fmt(info.rank) : "-",
+                        diff, diffColor, true));
+            } else {
+                out.add(new Row(name, coll, collName, info.status, "", "", MUTED, false));
+            }
+        }
+        return out;
+    }
+
+    private static TableLayout tableLayout(Font font, List<Row> rows) {
+        int nameW = font.width("PLAYER"), collW = font.width("COLLECTION"), amountW = font.width("AMOUNT");
+        int rankW = font.width("RANK"), diffW = font.width("YOU +/-");
+        for (Row r : rows) {
+            nameW = Math.max(nameW, font.width(r.name()));
+            collW = Math.max(collW, 6 + font.width(r.collName())); // 6 = color dot
+            amountW = Math.max(amountW, font.width(r.amount()));
+            rankW = Math.max(rankW, font.width(r.rank()));
+            diffW = Math.max(diffW, font.width(r.diff()));
+        }
+        int gap = 10;
+        int collX = 8 + nameW + gap;
+        int amountRight = collX + collW + gap + amountW;
+        int rankRight = amountRight + gap + rankW;
+        int diffRight = rankRight + gap + diffW;
+        return new TableLayout(collX, amountRight, rankRight, diffRight, diffRight + 8);
+    }
+
     private static void drawTable(GuiGraphicsExtractor g, Font font, int w, int top) {
         if (!hasTable()) return;
 
+        List<Row> rows = rows();
+        TableLayout t = tableLayout(font, rows);
         int cx = PAD, cx2 = w - PAD;
-        int cColl = 76, cAmount = 200, cRank = 240, cDiff = w - 8;
+        int diffRight = w - 8; // the last column sits at the right edge, also when the panel is wider than the table
 
         rect(g, 6, top, w - 6, top + 1, 0x22FFFFFF);
         int hy = top + 6;
         g.text(font, "PLAYER", 8, hy, MUTED, false);
-        g.text(font, "COLLECTION", cColl, hy, MUTED, false);
-        right(g, font, "AMOUNT", cAmount, hy, MUTED);
-        right(g, font, "RANK", cRank, hy, MUTED);
-        right(g, font, "YOU +/-", cDiff, hy, MUTED);
+        g.text(font, "COLLECTION", t.collX(), hy, MUTED, false);
+        right(g, font, "AMOUNT", t.amountRight(), hy, MUTED);
+        right(g, font, "RANK", t.rankRight(), hy, MUTED);
+        right(g, font, "YOU +/-", diffRight, hy, MUTED);
 
         int ry = top + TABLE_HEAD;
         int i = 0;
-        for (TrackedPlayers.Info info : TrackedPlayers.infos()) {
+        for (Row r : rows) {
             if (i++ % 2 == 0) rect(g, cx, ry - 1, cx2, ry + 9, 0x12FFFFFF); // zebra stripe
 
-            TrackedCollection coll = CollectionTracker.bySlug(info.slug); // the collection of this player
-            String name = info.name.length() > 10 ? info.name.substring(0, 10) : info.name;
-            g.text(font, name, 8, ry, 0xFFFFFFFF, false);
+            g.text(font, r.name(), 8, ry, 0xFFFFFFFF, false);
+            if (r.coll() != null) rect(g, t.collX(), ry + 2, t.collX() + 3, ry + 7, r.coll().colorArgb());
+            g.text(font, r.collName(), t.collX() + 6, ry, LIGHT, false);
 
-            String collName = coll == null ? "-" : (coll.name.length() > 11 ? coll.name.substring(0, 11) : coll.name);
-            if (coll != null) rect(g, cColl, ry + 2, cColl + 3, ry + 7, coll.colorArgb());
-            g.text(font, collName, cColl + 6, ry, LIGHT, false);
-
-            if (info.amount >= 0) {
-                long theirs = Math.round(info.amount);
-                right(g, font, fmt(theirs), cAmount, ry, 0xFFCCCCCC);
-                right(g, font, info.rank > 0 ? "#" + fmt(info.rank) : "-", cRank, ry, GOLD);
-
-                long own = coll == null ? -1 : coll.total();
-                if (own >= 0) {
-                    long d = own - theirs;
-                    String diff = (d >= 0 ? "+" : "-") + fmt(Math.abs(d)); // + = you are ahead
-                    right(g, font, diff, cDiff, ry, d >= 0 ? GREEN : RED);
-                } else {
-                    right(g, font, "-", cDiff, ry, MUTED);
-                }
+            if (r.hasData()) {
+                right(g, font, r.amount(), t.amountRight(), ry, 0xFFCCCCCC);
+                right(g, font, r.rank(), t.rankRight(), ry, GOLD);
+                right(g, font, r.diff(), diffRight, ry, r.diffColor());
             } else {
-                right(g, font, info.status, cAmount, ry, MUTED);
+                right(g, font, r.amount(), t.amountRight(), ry, MUTED); // status text such as "loading..."
             }
             ry += ROW_H;
         }
