@@ -64,6 +64,10 @@ public class SettingsScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Sync with Elite now"),
                 btn -> CollectionApi.syncNow()).bounds(right, y + 72, w, 20).build());
 
+        this.addRenderableWidget(Button.builder(Component.literal("Inventory HUD..."),
+                btn -> this.minecraft.gui.setScreen(new InventoryHudScreen(this)))
+                .bounds(right, y + 96, w, 20).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
     }

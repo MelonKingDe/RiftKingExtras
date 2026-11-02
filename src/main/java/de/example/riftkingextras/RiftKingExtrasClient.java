@@ -49,9 +49,20 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             ScoreboardHud.setHookInfo("off (hideVanilla is false in the config)");
         }
 
-        // The Time Warp message arrives as a game (system) message: start the 48 h countdown
+        // Fourth HUD: bars, equipment, armor, inventory and hotbar
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(MOD_ID, "inventory"),
+                (graphics, tracker) -> InventoryHud.render(graphics));
+        InventoryHud.setHookInfo("hotbar: " + hookVanilla(n -> n.equals("HOTBAR"), InventoryHud::hidesHotbar)
+                + " | status bars: " + hookVanilla(
+                n -> n.equals("HEALTH_BAR") || n.equals("ARMOR_BAR") || n.equals("FOOD_BAR") || n.equals("AIR_BAR")
+                        || n.equals("MOUNT_HEALTH") || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL"),
+                InventoryHud::hidesStatusBars));
+
+        // Game messages: action bar (overlay) feeds the stats bars, normal chat feeds the Time Warp countdown
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            if (!overlay) TimewarpTracker.onChat(message.getString());
+            if (overlay) StatsTracker.onActionBar(ScoreboardModel.plain(message));
+            else TimewarpTracker.onChat(message.getString());
         });
 
         // Key to open the settings (default: H, changeable under Options > Controls)
@@ -66,12 +77,37 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             }
             CollectionTracker.tick(client);
             ScoreboardHud.tick(client);
+            SkyBlockState.tick(client);
+            StatsTracker.tick(client);
+            InventoryHud.tick(client);
             MushroomBreaker.tick(client);
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> CollectionTracker.persist());
 
         CollectionApi.startScheduler();
         registerCommands();
+    }
+
+    /**
+     * Replaces every vanilla HUD element whose constant name matches, so it is skipped while hide.getAsBoolean() is
+     * true. Constants are found by name, so this works whatever the ids are in this Fabric API version.
+     */
+    private static String hookVanilla(java.util.function.Predicate<String> match, java.util.function.BooleanSupplier hide) {
+        StringBuilder info = new StringBuilder();
+        for (Field f : VanillaHudElements.class.getFields()) {
+            String name = f.getName().toUpperCase(Locale.ROOT);
+            if (f.getType() != Identifier.class || !match.test(name)) continue;
+            try {
+                Identifier id = (Identifier) f.get(null);
+                HudElementRegistry.replaceElement(id, original -> (graphics, tracker) -> {
+                    if (!hide.getAsBoolean()) ScoreboardHud.callOriginal(original, graphics, tracker);
+                });
+                info.append(name).append(" ok; ");
+            } catch (Exception e) {
+                info.append(name).append(" FAILED; ");
+            }
+        }
+        return info.length() == 0 ? "no matching element" : info.toString().trim();
     }
 
     /** Finds the id of the vanilla sidebar HUD element and replaces it with one that hides itself when needed. */
@@ -158,6 +194,17 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                     ctx.getSource().sendFeedback(Component.literal("Session gain and timers cleared."));
                                     return 1;
                                 })))
+                        .then(ClientCommands.literal("inventory")
+                                .executes(ctx -> openScreen(InventoryHudScreen::new))
+                                .then(ClientCommands.literal("hud")
+                                        .executes(ctx -> openScreen(p -> new HudEditScreen(p, HudKind.INVENTORY)))))
+                        .then(ClientCommands.literal("stats").executes(ctx -> {
+                            var source = ctx.getSource();
+                            for (String line : StatsTracker.dump(Minecraft.getInstance())) {
+                                source.sendFeedback(Component.literal(line));
+                            }
+                            return 1;
+                        }))
                         .then(ClientCommands.literal("sync").executes(ctx -> {
                             CollectionApi.syncNow();
                             ctx.getSource().sendFeedback(Component.literal("Sync with Elite started."));

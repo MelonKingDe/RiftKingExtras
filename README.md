@@ -49,6 +49,19 @@ Extras for Hypixel SkyBlock:
   - If the vanilla sidebar was visible at startup although "Hide vanilla one" is ON, or the game stops at startup with an
     error mentioning `scoreboard_sidebar`, set `"hideVanilla": false` in `config/riftkingextras-scoreboard.json`.
     Turning the option ON again needs a game restart (turning it OFF works immediately).
+- **Inventory HUD:** a fourth HUD in the same style. Top: health bar and mana bar with numbers. Left: the 4 equipment
+  items, right: the 4 armor pieces, in the middle your whole inventory (3 rows) above the hotbar, the selected hotbar slot
+  is marked. Bottom: speed (left), the rift time bar with its number (middle) and rift damage (right).
+  - Every item gets a **1 pixel frame in its rarity color** (taken from the rarity line of the item lore: common,
+    uncommon, rare, epic, legendary, mythic, divine, special, very special, ultimate ...). The frame goes around the item
+    slot, it does not follow the shape of the item texture.
+  - It **hides the vanilla hotbar** while it is shown (option, on by default); the vanilla health/armor/food/xp bars can
+    be hidden too (option, off by default). It only shows on SkyBlock unless you switch that off.
+  - Health, mana and rift time are read from the action bar, speed and rift damage from the tab list, so a wrong format
+    only shows "-". `/rke stats` shows what was read and what arrives.
+  - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
+    (`/equipment`) is open and remembers it until you close the game.
+  - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
 - **Tracked players:** add up to 6 player names. The HUD shows a table with each player's amount and rank and how much
   more (+) or less (-) you have than them, for one collection you pick ("Compare on"). Their values are from the last
   Elite sync, yours is live, so the difference can be off by what Elite has not seen yet.
@@ -76,6 +89,9 @@ For any other collection, list the items in `itemNames` of that collection in `c
 /rke collections     add or remove tracked collections
 /rke players         add or remove tracked players
 /rke hud             move the HUD
+/rke inventory       inventory HUD settings
+/rke inventory hud   move and resize the inventory HUD
+/rke stats           show what the inventory HUD read (health, mana, rift time, speed, items, hooks)
 /rke scoreboard      scoreboard settings
 /rke scoreboard dump  show the sidebar lines the mod reads and how it sorts them (for debugging)
 /rke scoreboard status  show how the vanilla sidebar was hooked
@@ -107,6 +123,9 @@ The places most likely to need a fix:
 - `TrackerHud.rect(...)`: the fill method of `GuiGraphicsExtractor` (everything in the HUD is drawn with it)
 - `MushroomBreaker`: `mc.hitResult`, `mc.gameMode.startDestroyBlock(...)`, `swing(...)`
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
+- `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `AbstractContainerScreen`, `Player.inventoryMenu`; the item draw methods and the selected hotbar slot are found by reflection (`/rke stats` shows `Items: ...`)
+- `ItemRarity`: `DataComponents.LORE` / `ItemLore.lines()`
+- `StatsTracker`: `mc.getConnection().getOnlinePlayers()`, `PlayerInfo.getTabListDisplayName()`
 - `ScoreboardReader`: the scoreboard classes (`Scoreboard`, `Objective`, `PlayerScoreEntry`, `PlayerTeam`, `DisplaySlot`)
 - `RiftKingExtrasClient`: `HudElementRegistry.replaceElement(...)` with the id `scoreboard_sidebar`
 - `ScoreboardHud`: `text(...)` with a `Component`, `mc.debugEntries.isOverlayVisible()`, `mc.options.keyPlayerList.isDown()`

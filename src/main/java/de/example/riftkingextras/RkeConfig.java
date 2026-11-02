@@ -24,6 +24,15 @@ public final class RkeConfig {
     public static volatile boolean showTimewarp = true;
     public static volatile long timewarpEndMs = 0; // real-time (epoch ms) when the cooldown ends, 0 = none running
     public static volatile String timewarpMessage = "you have successfully warped time for your minion";
+
+    // Fourth HUD: health/mana/rift time bars, equipment, armor, inventory and hotbar
+    public static int invX = -1, invY = -1; // -1 = default (bottom center)
+    public static volatile float invScale = 1.0f;
+    public static volatile boolean invEnabled = true;
+    public static volatile boolean invOnlySkyBlock = true;
+    public static volatile boolean hideHotbar = true;
+    public static volatile boolean hideStatusBars = false;
+    public static volatile boolean rarityBorders = true;
     public static volatile boolean showTimers = true; // uptime/downtime line per collection in the HUD
     public static final List<TrackedCollection> collections = new CopyOnWriteArrayList<>();
     public static final List<String> players = new CopyOnWriteArrayList<>();
@@ -46,6 +55,9 @@ public final class RkeConfig {
         boolean showTimewarp = true;
         long timewarpEndMs = 0;
         String timewarpMessage = "you have successfully warped time for your minion";
+        int invX = -1, invY = -1;
+        float invScale = 1.0f;
+        boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideStatusBars = false, rarityBorders = true;
         List<TrackedCollection> collections = new ArrayList<>();
         List<String> players = new ArrayList<>();
         String playerSlug = "";
@@ -67,6 +79,9 @@ public final class RkeConfig {
                     twX = d.twX; twY = d.twY; showTimewarp = d.showTimewarp; timewarpEndMs = d.timewarpEndMs;
                     if (d.twScale >= 0.25f && d.twScale <= 2.0f) twScale = d.twScale;
                     if (d.timewarpMessage != null && !d.timewarpMessage.isBlank()) timewarpMessage = d.timewarpMessage;
+                    invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
+                    hideHotbar = d.hideHotbar; hideStatusBars = d.hideStatusBars; rarityBorders = d.rarityBorders;
+                    if (d.invScale >= 0.25f && d.invScale <= 2.0f) invScale = d.invScale;
                     if (d.playerSlug != null) playerSlug = d.playerSlug;
                     if (d.apiBase != null && !d.apiBase.isBlank()) apiBase = d.apiBase;
                     if (d.profilePath != null && !d.profilePath.isBlank()) profilePath = d.profilePath;
@@ -99,6 +114,9 @@ public final class RkeConfig {
             d.hudX = hudX; d.hudY = hudY; d.showTimers = showTimers; d.hudScale = hudScale;
             d.twX = twX; d.twY = twY; d.twScale = twScale; d.showTimewarp = showTimewarp;
             d.timewarpEndMs = timewarpEndMs; d.timewarpMessage = timewarpMessage;
+            d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
+            d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideStatusBars = hideStatusBars;
+            d.rarityBorders = rarityBorders;
             d.collections = new ArrayList<>(collections);
             d.players = new ArrayList<>(players);
             d.playerSlug = playerSlug;
