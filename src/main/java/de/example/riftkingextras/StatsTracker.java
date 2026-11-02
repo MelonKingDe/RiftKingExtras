@@ -1,11 +1,15 @@
 package de.example.riftkingextras;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +30,9 @@ final class StatsTracker {
     static volatile int riftSeconds = -1;
     static volatile int riftMax = 0;
     static volatile long speed = -1, riftDamage = -1;
+    static volatile String speedSource = "none yet";
+    static volatile boolean speedLive = false;      // seen in the tab list this session (otherwise: last known value)
+    static volatile boolean riftDamageLive = false;
     static volatile long lastActionBarMs = 0, lastHealthMs = 0, lastManaMs = 0, lastRiftMs = 0;
     static volatile String lastActionBar = "";
     private static int ticks = 0;
@@ -41,7 +48,8 @@ final class StatsTracker {
     private static final Pattern RIFT_LEFT =
             Pattern.compile("(?:(\\d+)h\\s?)?(?:(\\d+)m\\s?)?(\\d+)s\\D{0,3}Left", Pattern.CASE_INSENSITIVE);
     private static final Pattern RIFT_TIME = Pattern.compile("(?:(\\d+)h\\s?)?(?:(\\d+)m\\s?)?(\\d+)s");
-    private static final Pattern SPEED = Pattern.compile("speed:?\\s*\\D{0,3}" + NUM, Pattern.CASE_INSENSITIVE);
+    // a tab line that STARTS with "Speed" ("Speed: ✦400"); "Mining Speed" and similar do not match
+    private static final Pattern SPEED = Pattern.compile("^\\W*speed\\b\\D{0,8}" + NUM, Pattern.CASE_INSENSITIVE);
     private static final Pattern RIFT_DAMAGE =
             Pattern.compile("rift (?:damage|dmg):?\\s*\\D{0,3}" + NUM, Pattern.CASE_INSENSITIVE);
 
@@ -101,13 +109,129 @@ final class StatsTracker {
 
     /** Called every client tick: reads speed and rift damage from the tab list about once per second. */
     static void tick(Minecraft mc) {
+        if (++menuTicks % 10 == 0) readStatsMenu(mc);
         if (++ticks % 20 != 0) return;
+        boolean tabSpeed = false;
         for (String line : tabLines(mc)) {
             Matcher m = SPEED.matcher(line);
-            if (m.find()) speed = num(m.group(1));
+            if (m.find()) {
+                speed = num(m.group(1));
+                speedLive = true;
+                speedSource = "tab list";
+                RkeConfig.lastSpeed = speed;
+                tabSpeed = true;
+            }
             m = RIFT_DAMAGE.matcher(line);
-            if (m.find()) riftDamage = num(m.group(1));
+            if (m.find()) {
+                riftDamage = num(m.group(1));
+                riftDamageLive = true;
+                RkeConfig.lastRiftDamage = riftDamage;
+            }
         }
+        if (!tabSpeed) { // no speed line in the tab list (e.g. in the Rift): use the movement speed attribute
+            double base = attributeBase(mc.player);
+            if (base > 0) {
+                speed = Math.round(base * RkeConfig.speedScale);
+                speedLive = true;
+                speedSource = RkeConfig.speedCalibrated ? "attribute, calibrated by the stats menu"
+                        : "attribute x1000 (open /stats once to calibrate)";
+                RkeConfig.lastSpeed = speed;
+            }
+        }
+    }
+
+    private static Object speedHolder = null;
+    private static boolean speedHolderResolved = false;
+
+    /**
+     * The base value of the player's movement speed attribute (SkyBlock sets it to about speed / 1000).
+     * Used when the tab list has no speed line, e.g. in the Rift. Everything is looked up by reflection, so a
+     * renamed class member cannot break the build. The base value is used, so sprinting does not change it.
+     * Returns -1 if it cannot be read.
+     */
+    static double attributeBase(Player p) {
+        if (p == null) return -1;
+        try {
+            if (!speedHolderResolved) {
+                speedHolderResolved = true;
+                Class<?> attributes = Class.forName("net.minecraft.world.entity.ai.attributes.Attributes");
+                for (String name : new String[]{"MOVEMENT_SPEED", "GENERIC_MOVEMENT_SPEED"}) {
+                    try {
+                        speedHolder = attributes.getField(name).get(null);
+                        break;
+                    } catch (ReflectiveOperationException ignored) {
+                        // try the next name
+                    }
+                }
+            }
+            if (speedHolder == null) return -1;
+            Method getAttribute = null;
+            for (Method m : p.getClass().getMethods()) {
+                if (m.getName().equals("getAttribute") && m.getParameterCount() == 1) {
+                    getAttribute = m;
+                    break;
+                }
+            }
+            if (getAttribute == null) return -1;
+            Object instance = getAttribute.invoke(p, speedHolder);
+            if (instance == null) return -1;
+            return (double) instance.getClass().getMethod("getBaseValue").invoke(instance);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return -1;
+        }
+    }
+
+    // ---------- the /stats menu ----------
+
+    private static int menuTicks = 0;
+    private static String statsMenuInfo = "not opened yet";
+
+    /**
+     * While a stats menu (title contains "stat") is open, the speed (and rift damage) is read from the item names,
+     * e.g. "Speed 153". That value is saved, and it also calibrates the conversion of the movement speed attribute,
+     * so the speed then follows equipment changes live without opening the menu again.
+     */
+    private static void readStatsMenu(Minecraft mc) {
+        if (!(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) return;
+        String title = screen.getTitle().getString();
+        if (!title.toLowerCase(Locale.ROOT).contains("stat")) return;
+
+        List<String> speedItems = new ArrayList<>();
+        for (Slot slot : screen.getMenu().slots) {
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty()) continue;
+            String name = ScoreboardModel.plain(stack.getHoverName());
+            if (name.toLowerCase(Locale.ROOT).contains("speed") && speedItems.size() < 6) speedItems.add(name);
+
+            Matcher m = SPEED.matcher(name);
+            if (m.find()) applyMenuSpeed(mc, num(m.group(1)));
+            m = RIFT_DAMAGE.matcher(name);
+            if (m.find()) {
+                riftDamage = num(m.group(1));
+                riftDamageLive = true;
+                RkeConfig.lastRiftDamage = riftDamage;
+            }
+        }
+        statsMenuInfo = "\"" + title + "\", items with 'speed': " + (speedItems.isEmpty() ? "none" : speedItems);
+    }
+
+    private static void applyMenuSpeed(Minecraft mc, long value) {
+        speed = value;
+        speedLive = true;
+        speedSource = "stats menu";
+        RkeConfig.lastSpeed = value;
+        double base = attributeBase(mc.player);
+        if (base > 0) {
+            RkeConfig.speedScale = value / base; // calibrates the attribute conversion
+            RkeConfig.speedCalibrated = true;
+        }
+        RkeConfig.save();
+    }
+
+    /** Loads the values seen last time, so they show right away until the tab list gives new ones. */
+    static void init() {
+        speed = RkeConfig.lastSpeed;
+        riftDamage = RkeConfig.lastRiftDamage;
     }
 
     private static List<String> tabLines(Minecraft mc) {
@@ -184,12 +308,18 @@ final class StatsTracker {
         BarInfo hp = healthBar(mc);
         out.add("Health: " + hp.text() + (health >= 0 && fresh(lastHealthMs) ? " (action bar)" : " (hearts)")
                 + " | Mana: " + manaBar().text() + " | Rift: " + riftBar(mc).text() + " (max " + riftMax + "s)");
-        out.add("Speed " + speed + ", Rift damage " + riftDamage);
+        out.add("Speed " + speed + (speedLive ? " (" + speedSource + ")" : " (last known)")
+                + ", Rift damage " + riftDamage + (riftDamageLive ? " (tab list)" : " (last known)"));
+        out.add("Speed scale " + String.format(Locale.US, "%.1f", RkeConfig.speedScale)
+                + (RkeConfig.speedCalibrated ? " (calibrated)" : " (default)") + ", attribute base " + attributeBase(mc.player));
+        out.add("Stats menu: " + statsMenuInfo);
         out.add("Action bar reader: " + ActionBarReader.status());
         out.add("Last action bar: " + (lastActionBar.isEmpty() ? "none seen yet" : lastActionBar));
         for (String line : tabLines(mc)) {
             String l = line.toLowerCase(Locale.ROOT);
-            if (l.contains("speed") || l.contains("damage") || l.contains("rift")) out.add("Tab: " + line);
+            if (l.contains("speed") || l.contains("damage") || l.contains("rift") || line.contains("\u2726")) {
+                out.add("Tab: " + line);
+            }
         }
         out.add("Items: " + ItemDraw.status());
         out.add("Equipment: " + InventoryHud.equipmentInfo());

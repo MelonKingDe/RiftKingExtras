@@ -199,9 +199,10 @@ public final class InventoryHud {
 
         // bottom row: speed, rift time bar, rift damage
         String speed = "\u2726 " + (StatsTracker.speed < 0 ? "-" : fmt(StatsTracker.speed));
-        g.text(font, speed, PAD, BOTTOM_Y + 2, 0xFFE8C468, true);
+        g.text(font, speed, PAD, BOTTOM_Y + 2, StatsTracker.speedLive ? 0xFFE8C468 : 0xFF8A8F98, true);
         String damage = (StatsTracker.riftDamage < 0 ? "-" : fmt(StatsTracker.riftDamage)) + " \u2694";
-        g.text(font, damage, W - PAD - font.width(damage), BOTTOM_Y + 2, 0xFFFF8080, true);
+        g.text(font, damage, W - PAD - font.width(damage), BOTTOM_Y + 2,
+                StatsTracker.riftDamageLive ? 0xFFFF8080 : 0xFF8A8F98, true);
         int riftX = PAD + 46;
         int riftW = W - 2 * PAD - 92;
         StatsTracker.BarInfo rift = StatsTracker.riftBar(mc);

@@ -61,6 +61,12 @@ Extras for Hypixel SkyBlock:
   - Mana and rift time are read from the action bar ("214/214 Mana", "73m16s Left"), speed and rift damage from the
     tab list. In the Rift the health is not in the action bar, so the bar shows your vanilla hearts (15 hearts = 15/15);
     on the other islands it uses the real health from the action bar. A wrong format only shows "-".
+    Speed comes from the tab list when it has a "Speed" line. In the Rift it does not: open `/stats` once, the mod reads the
+    speed from the menu and saves it. It also uses that number to calibrate your movement speed attribute, so the shown
+    speed then follows equipment changes by itself. Without a calibration the attribute is used as value x 1000.
+    `/rke stats` shows which source is used and which 'speed' items the last stats menu had.
+    Speed and rift damage show gray while they are the last known values (saved in the config) and in color once the tab
+    list has given a fresh one.
     The action bar is read directly from the game, so hiding it does not stop the mod from reading it.
     `/rke stats` shows what was read and what arrives.
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu

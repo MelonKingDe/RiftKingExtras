@@ -29,6 +29,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
     public void onInitializeClient() {
         RkeConfig.load();
         ScoreboardConfig.load();
+        StatsTracker.init();
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(MOD_ID, "tracker"),

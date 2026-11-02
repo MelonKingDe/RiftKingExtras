@@ -33,6 +33,9 @@ public final class RkeConfig {
     public static volatile boolean hideHotbar = true;
     public static volatile boolean hideVanillaBars = true; // hearts, xp bar + level, action bar
     public static volatile boolean rarityBorders = true;
+    public static volatile long lastSpeed = -1, lastRiftDamage = -1; // last values seen (tab list, /stats menu, attribute)
+    public static volatile double speedScale = 1000.0;    // speed = movement speed attribute * speedScale
+    public static volatile boolean speedCalibrated = false;
     public static volatile boolean showTimers = true; // uptime/downtime line per collection in the HUD
     public static final List<TrackedCollection> collections = new CopyOnWriteArrayList<>();
     public static final List<String> players = new CopyOnWriteArrayList<>();
@@ -56,6 +59,9 @@ public final class RkeConfig {
         long timewarpEndMs = 0;
         String timewarpMessage = "you have successfully warped time for your minion";
         int invX = -1, invY = -1;
+        long lastSpeed = -1, lastRiftDamage = -1;
+        double speedScale = 1000.0;
+        boolean speedCalibrated = false;
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
         List<TrackedCollection> collections = new ArrayList<>();
@@ -82,6 +88,9 @@ public final class RkeConfig {
                     invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
                     if (d.invScale >= 0.25f && d.invScale <= 2.0f) invScale = d.invScale;
+                    lastSpeed = d.lastSpeed; lastRiftDamage = d.lastRiftDamage;
+                    if (d.speedScale > 0) speedScale = d.speedScale;
+                    speedCalibrated = d.speedCalibrated;
                     if (d.playerSlug != null) playerSlug = d.playerSlug;
                     if (d.apiBase != null && !d.apiBase.isBlank()) apiBase = d.apiBase;
                     if (d.profilePath != null && !d.profilePath.isBlank()) profilePath = d.profilePath;
@@ -117,6 +126,8 @@ public final class RkeConfig {
             d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
+            d.lastSpeed = lastSpeed; d.lastRiftDamage = lastRiftDamage;
+            d.speedScale = speedScale; d.speedCalibrated = speedCalibrated;
             d.collections = new ArrayList<>(collections);
             d.players = new ArrayList<>(players);
             d.playerSlug = playerSlug;
