@@ -19,7 +19,7 @@ import java.util.Locale;
  * speed and rift damage at the bottom. Items get a 1 pixel frame in their rarity color.
  */
 public final class InventoryHud {
-    private static final int SLOT = 18, PITCH = 19, PAD = 6, COL_GAP = 8, BAR_H = 12;
+    private static final int SLOT = 18, PITCH = 19, PAD = 6, COL_GAP = 8, BAR_H = 8; // thin bars (was 12)
     private static final int GRID_W = 9 * PITCH - 1;
     private static final int GRID_X = PAD + SLOT + COL_GAP;
     private static final int ARMOR_X = GRID_X + GRID_W + COL_GAP;
@@ -29,7 +29,7 @@ public final class InventoryHud {
     static final int W = ARMOR_X + SLOT + PAD;
     static final int H = BOTTOM_Y + BAR_H + PAD;
 
-    private static final int HEALTH = 0xFFE0524B, MANA = 0xFF55CFFF, RIFT = 0xFF7BD88F;
+    private static final int HEALTH = 0xFFE0524B, MANA = 0xFF55CFFF, RIFT = 0xFF7BD88F, LEVEL = 0xFFE8C468;
     private static final int SELECTED = 0xFF55FFFF;
     private static final int[] EQUIPMENT_MENU_SLOTS = {10, 19, 28, 37};
 
@@ -197,16 +197,26 @@ public final class InventoryHud {
                     GRID_X + c * PITCH, HOTBAR_Y, c == selected);
         }
 
-        // bottom row: speed, rift time bar, rift damage
+        // bottom row: speed (left), time/level bar (middle), rift damage or defense (right)
+        boolean rift = SkyBlockState.inRift;
         String speed = "\u2726 " + (StatsTracker.speed < 0 ? "-" : fmt(StatsTracker.speed));
-        g.text(font, speed, PAD, BOTTOM_Y + 2, StatsTracker.speedLive ? 0xFFE8C468 : 0xFF8A8F98, true);
-        String damage = (StatsTracker.riftDamage < 0 ? "-" : fmt(StatsTracker.riftDamage)) + " \u2694";
-        g.text(font, damage, W - PAD - font.width(damage), BOTTOM_Y + 2,
-                StatsTracker.riftDamageLive ? 0xFFFF8080 : 0xFF8A8F98, true);
-        int riftX = PAD + 46;
-        int riftW = W - 2 * PAD - 92;
-        StatsTracker.BarInfo rift = StatsTracker.riftBar(mc);
-        bar(g, font, riftX, BOTTOM_Y, riftW, rift.frac(), rift.text(), RIFT);
+        g.text(font, speed, PAD, BOTTOM_Y, StatsTracker.speedLive ? 0xFFE8C468 : 0xFF8A8F98, true);
+
+        String stat;
+        int statColor;
+        if (rift) { // Rift: rift damage
+            stat = (StatsTracker.riftDamage < 0 ? "-" : fmt(StatsTracker.riftDamage)) + " \u2694";
+            statColor = StatsTracker.riftDamageLive ? 0xFFFF8080 : 0xFF8A8F98;
+        } else {    // everywhere else: defense
+            stat = "\u2748 " + (StatsTracker.defense < 0 ? "-" : fmt(StatsTracker.defense));
+            statColor = StatsTracker.defenseLive ? 0xFF7BD88F : 0xFF8A8F98;
+        }
+        g.text(font, stat, W - PAD - font.width(stat), BOTTOM_Y, statColor, true);
+
+        int midX = PAD + 46;
+        int midW = W - 2 * PAD - 92;
+        StatsTracker.BarInfo bottom = rift ? StatsTracker.riftBar(mc) : StatsTracker.levelBar(mc);
+        bar(g, font, midX, BOTTOM_Y, midW, bottom.frac(), bottom.text(), rift ? RIFT : LEVEL);
     }
 
     private static String fmt(long v) {
@@ -219,7 +229,14 @@ public final class InventoryHud {
         int fill = (int) Math.round(w * frac);
         if (fill >= 4) TrackerHud.rrect(g, x, y, x + fill, y + BAR_H, TrackerHud.withAlpha(color, 0xCC));
         else if (fill > 0) TrackerHud.rect(g, x, y + 1, x + fill, y + BAR_H - 1, TrackerHud.withAlpha(color, 0xCC));
-        g.text(font, text, x + (w - font.width(text)) / 2, y + 2, 0xFFFFFFFF, true);
+        // small text, so it fits into the thin bar
+        float textScale = 0.75f;
+        Matrix3x2fStack pose = g.pose();
+        pose.pushMatrix();
+        pose.translate(x + (w - font.width(text) * textScale) / 2f, y + (BAR_H - 8 * textScale) / 2f);
+        pose.scale(textScale, textScale);
+        g.text(font, text, 0, 0, 0xFFFFFFFF, true);
+        pose.popMatrix();
     }
 
     /** One item slot: faint background, 1 pixel frame in the rarity color, the item, and a marker if selected. */

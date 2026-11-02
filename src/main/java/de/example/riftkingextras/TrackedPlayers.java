@@ -14,7 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Other players shown in the HUD table: name -> UUID (Mojang), then amount and rank from Elite. */
+/**
+ * Other players shown in the HUD table. Every player has his own collection: name -> UUID (Mojang), then amount and
+ * rank of that collection from Elite.
+ */
 public final class TrackedPlayers {
     static final class Info {
         final String name;
@@ -41,18 +44,25 @@ public final class TrackedPlayers {
         return RkeConfig.players.size();
     }
 
+    /** The collection of a player: his own if it is still tracked, otherwise the first tracked collection. */
+    static String slugOf(RkeConfig.PlayerEntry entry) {
+        for (TrackedCollection c : RkeConfig.collections) {
+            if (c.slug.equals(entry.slug)) return c.slug;
+        }
+        return RkeConfig.collections.isEmpty() ? "" : RkeConfig.collections.get(0).slug;
+    }
+
     /** Infos in the order the players were added. */
     static List<Info> infos() {
-        TrackedCollection compare = CollectionTracker.compareCollection();
-        String cur = compare == null ? "" : compare.slug;
         List<Info> out = new ArrayList<>();
-        for (String n : RkeConfig.players) {
-            Info info = INFO.computeIfAbsent(n.toLowerCase(Locale.ROOT), k -> new Info(n));
-            if (!info.slug.equals(cur)) { // compared collection changed: old values do not apply
+        for (RkeConfig.PlayerEntry entry : RkeConfig.players) {
+            String slug = slugOf(entry);
+            Info info = INFO.computeIfAbsent(entry.name.toLowerCase(Locale.ROOT), k -> new Info(entry.name));
+            if (!info.slug.equals(slug)) { // the collection of this player changed: old values do not apply
                 info.amount = -1;
                 info.rank = -1;
                 info.status = "loading...";
-                info.slug = cur;
+                info.slug = slug;
             }
             out.add(info);
         }
@@ -60,32 +70,40 @@ public final class TrackedPlayers {
     }
 
     static boolean contains(String name) {
-        for (String n : RkeConfig.players) if (n.equalsIgnoreCase(name)) return true;
+        for (RkeConfig.PlayerEntry e : RkeConfig.players) if (e.name.equalsIgnoreCase(name)) return true;
         return false;
     }
 
-    static void add(String name) {
-        RkeConfig.players.add(name);
+    static void add(String name, String slug) {
+        RkeConfig.players.add(new RkeConfig.PlayerEntry(name, slug));
         RkeConfig.save();
         CollectionApi.syncPlayersNow();
     }
 
     static void remove(String name) {
-        RkeConfig.players.removeIf(n -> n.equalsIgnoreCase(name));
+        RkeConfig.players.removeIf(e -> e.name.equalsIgnoreCase(name));
         INFO.remove(name.toLowerCase(Locale.ROOT));
         RkeConfig.save();
     }
 
-    /** Refreshes every tracked player (background thread). Requests are spaced out to be gentle on the APIs. */
+    /** Puts one player on another collection. */
+    static void setCollection(String name, String slug) {
+        for (RkeConfig.PlayerEntry e : RkeConfig.players) {
+            if (e.name.equalsIgnoreCase(name)) e.slug = slug;
+        }
+        RkeConfig.save();
+        CollectionApi.syncPlayersNow();
+    }
+
+    /** Refreshes every tracked player on his collection (background thread). Requests are spaced out. */
     static void syncAll() {
-        TrackedCollection compare = CollectionTracker.compareCollection();
-        if (compare == null) return;
-        String slug = compare.slug;
-        for (String name : new ArrayList<>(RkeConfig.players)) {
-            Info info = INFO.computeIfAbsent(name.toLowerCase(Locale.ROOT), k -> new Info(name));
+        for (RkeConfig.PlayerEntry entry : new ArrayList<>(RkeConfig.players)) {
+            String slug = slugOf(entry);
+            if (slug.isEmpty()) return; // no collection tracked at all
+            Info info = INFO.computeIfAbsent(entry.name.toLowerCase(Locale.ROOT), k -> new Info(entry.name));
             try {
                 if (info.uuid == null) {
-                    UUID id = resolveUuid(name);
+                    UUID id = resolveUuid(entry.name);
                     if (id == null) {
                         info.status = "not found";
                         continue;

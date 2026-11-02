@@ -33,13 +33,26 @@ public final class RkeConfig {
     public static volatile boolean hideHotbar = true;
     public static volatile boolean hideVanillaBars = true; // hearts, xp bar + level, action bar
     public static volatile boolean rarityBorders = true;
-    public static volatile long lastSpeed = -1, lastRiftDamage = -1; // last values seen (tab list, /stats menu, attribute)
+    public static volatile long lastSpeed = -1, lastRiftDamage = -1, lastDefense = -1; // last values seen (tab list, /stats menu, attribute)
     public static volatile double speedScale = 1000.0;    // speed = movement speed attribute * speedScale
     public static volatile boolean speedCalibrated = false;
     public static volatile boolean showTimers = true; // uptime/downtime line per collection in the HUD
     public static final List<TrackedCollection> collections = new CopyOnWriteArrayList<>();
-    public static final List<String> players = new CopyOnWriteArrayList<>();
-    public static volatile String playerSlug = ""; // collection the player table compares on ("" = first)
+
+    /** A tracked player and the collection he is compared on (empty slug = the first tracked collection). */
+    public static final class PlayerEntry {
+        public String name = "";
+        public String slug = "";
+
+        public PlayerEntry() {}
+
+        PlayerEntry(String name, String slug) {
+            this.name = name;
+            this.slug = slug;
+        }
+    }
+
+    public static final List<PlayerEntry> players = new CopyOnWriteArrayList<>();
 
     // Same defaults as config/nametaglines.json of the NameTagMod
     public static String apiBase = "https://api.eliteskyblock.com";
@@ -59,14 +72,15 @@ public final class RkeConfig {
         long timewarpEndMs = 0;
         String timewarpMessage = "you have successfully warped time for your minion";
         int invX = -1, invY = -1;
-        long lastSpeed = -1, lastRiftDamage = -1;
+        long lastSpeed = -1, lastRiftDamage = -1, lastDefense = -1;
         double speedScale = 1000.0;
         boolean speedCalibrated = false;
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
         List<TrackedCollection> collections = new ArrayList<>();
-        List<String> players = new ArrayList<>();
-        String playerSlug = "";
+        List<PlayerEntry> trackedPlayers = new ArrayList<>();
+        List<String> players = new ArrayList<>(); // old format, only read
+        String playerSlug = "";                   // old format, only read
         String apiBase = "https://api.eliteskyblock.com";
         String profilePath = "/profile/{uuid}/selected";
         String rankPath = "/leaderboard/rank/{lb}/{uuid}/{profile}";
@@ -88,10 +102,9 @@ public final class RkeConfig {
                     invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
                     if (d.invScale >= 0.25f && d.invScale <= 2.0f) invScale = d.invScale;
-                    lastSpeed = d.lastSpeed; lastRiftDamage = d.lastRiftDamage;
+                    lastSpeed = d.lastSpeed; lastRiftDamage = d.lastRiftDamage; lastDefense = d.lastDefense;
                     if (d.speedScale > 0) speedScale = d.speedScale;
                     speedCalibrated = d.speedCalibrated;
-                    if (d.playerSlug != null) playerSlug = d.playerSlug;
                     if (d.apiBase != null && !d.apiBase.isBlank()) apiBase = d.apiBase;
                     if (d.profilePath != null && !d.profilePath.isBlank()) profilePath = d.profilePath;
                     if (d.rankPath != null && !d.rankPath.isBlank()) rankPath = d.rankPath;
@@ -103,9 +116,19 @@ public final class RkeConfig {
                         }
                     }
                     players.clear();
-                    if (d.players != null) {
+                    if (d.trackedPlayers != null) {
+                        for (PlayerEntry e : d.trackedPlayers) {
+                            if (e == null || e.name == null || e.name.isBlank() || players.size() >= MAX_PLAYERS) continue;
+                            if (e.slug == null) e.slug = "";
+                            players.add(e);
+                        }
+                    }
+                    if (players.isEmpty() && d.players != null) { // older config: all players on one collection
+                        String oldSlug = d.playerSlug == null ? "" : d.playerSlug;
                         for (String n : d.players) {
-                            if (n != null && !n.isBlank() && players.size() < MAX_PLAYERS) players.add(n.trim());
+                            if (n != null && !n.isBlank() && players.size() < MAX_PLAYERS) {
+                                players.add(new PlayerEntry(n.trim(), oldSlug));
+                            }
                         }
                     }
                 }
@@ -126,11 +149,10 @@ public final class RkeConfig {
             d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
-            d.lastSpeed = lastSpeed; d.lastRiftDamage = lastRiftDamage;
+            d.lastSpeed = lastSpeed; d.lastRiftDamage = lastRiftDamage; d.lastDefense = lastDefense;
             d.speedScale = speedScale; d.speedCalibrated = speedCalibrated;
             d.collections = new ArrayList<>(collections);
-            d.players = new ArrayList<>(players);
-            d.playerSlug = playerSlug;
+            d.trackedPlayers = new ArrayList<>(players);
             d.apiBase = apiBase; d.profilePath = profilePath; d.rankPath = rankPath;
             Files.writeString(FILE, GSON.toJson(d));
         } catch (Exception ignored) {}

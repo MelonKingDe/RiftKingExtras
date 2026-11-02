@@ -55,6 +55,11 @@ Extras for Hypixel SkyBlock:
   - Every item gets a **1 pixel frame in its rarity color** (taken from the rarity line of the item lore: common,
     uncommon, rare, epic, legendary, mythic, divine, special, very special, ultimate ...). The frame goes around the item
     slot, it does not follow the shape of the item texture.
+  - **Rift or not:** the mod detects the Rift (the area line of the sidebar starts with the Rift symbol, or the action
+    bar shows the rift time). In the Rift: health from the vanilla hearts, bottom bar = rift time, bottom right = rift
+    damage. Everywhere else on SkyBlock: health from the action bar, bottom bar = SkyBlock level and xp to the next
+    level (the vanilla xp bar shows both), bottom right = defense. Mana comes from the action bar in both cases.
+  - The bars are thin (8 pixels); change `BAR_H` in `InventoryHud.java` if you want another height.
   - It **hides the vanilla hotbar** while it is shown (option, on by default). A second option (also on by default)
     hides the vanilla hearts, armor and food bars, the xp bar with its level number and the action bar. It only shows on
     SkyBlock unless you switch that off.
@@ -72,9 +77,12 @@ Extras for Hypixel SkyBlock:
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
     (`/equipment`) is open and remembers it until you close the game.
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
-- **Tracked players:** add up to 6 player names. The HUD shows a table with each player's amount and rank and how much
-  more (+) or less (-) you have than them, for one collection you pick ("Compare on"). Their values are from the last
-  Elite sync, yours is live, so the difference can be off by what Elite has not seen yet.
+- **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
+  amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
+  the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
+  added player gets the collection set in "New player's collection". Their values are from the last Elite sync, yours is
+  live, so the difference can be off by what Elite has not seen yet. Older configs are converted (all players keep the
+  collection they were compared on before).
 - **Settings screen** with the RiftKingExtras logo: press **H** (changeable in Options > Controls) or type `/rke`.
   From there: collections, tracked players, move and resize the HUD (sliders, live preview) and a manual sync.
 - **Mushroom helper:** when the brown mushroom you look at turns into a red mushroom, the mod sends a single left click

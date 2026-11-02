@@ -29,21 +29,23 @@ final class StatsTracker {
     static volatile String riftText = "";
     static volatile int riftSeconds = -1;
     static volatile int riftMax = 0;
-    static volatile long speed = -1, riftDamage = -1;
+    static volatile long speed = -1, riftDamage = -1, defense = -1;
     static volatile String speedSource = "none yet";
     static volatile boolean speedLive = false;      // seen in the tab list this session (otherwise: last known value)
     static volatile boolean riftDamageLive = false;
+    static volatile boolean defenseLive = false;
+    static volatile long lastDefenseMs = 0;
     static volatile long lastActionBarMs = 0, lastHealthMs = 0, lastManaMs = 0, lastRiftMs = 0;
     static volatile String lastActionBar = "";
     private static int ticks = 0;
 
     private static final String NUM = "(\\d[\\d,]*)";
-    private static final Pattern HP_AFTER = Pattern.compile(NUM + "\\s*/\\s*" + NUM + "\\s*\u2764");
-    private static final Pattern HP_BEFORE = Pattern.compile("\u2764\\uFE0F?\\s*" + NUM + "\\s*/\\s*" + NUM);
-    // "214/214" + one symbol + "Mana"
-    private static final Pattern MANA = Pattern.compile(NUM + "\\s*/\\s*" + NUM + "\\D{0,3}Mana", Pattern.CASE_INSENSITIVE);
-    private static final Pattern MANA_SYMBOL_AFTER = Pattern.compile(NUM + "\\s*/\\s*" + NUM + "\\s*\u270E");
-    private static final Pattern MANA_SYMBOL_BEFORE = Pattern.compile("\u270E\\s*" + NUM + "\\s*/\\s*" + NUM);
+    // every "123/456" in the action bar; what it is (health or mana) is decided by the symbol or word next to it
+    private static final Pattern PAIR = Pattern.compile(NUM + "\\s*/\\s*" + NUM);
+    private static final String HEART_SYMBOLS = "\u2764\u2665\u2661\u2763";
+    private static final String MANA_SYMBOLS = "\u270E\u270F";
+    private static final Pattern DEFENSE_BAR = Pattern.compile(NUM + "\\D{0,3}Defense", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DEFENSE_NAME = Pattern.compile("^\\W*defense\\b\\D{0,8}" + NUM, Pattern.CASE_INSENSITIVE);
     // "73m16s" + symbol + "Left" (Rift action bar)
     private static final Pattern RIFT_LEFT =
             Pattern.compile("(?:(\\d+)h\\s?)?(?:(\\d+)m\\s?)?(\\d+)s\\D{0,3}Left", Pattern.CASE_INSENSITIVE);
@@ -54,6 +56,13 @@ final class StatsTracker {
             Pattern.compile("rift (?:damage|dmg):?\\s*\\D{0,3}" + NUM, Pattern.CASE_INSENSITIVE);
 
     private StatsTracker() {}
+
+    private static boolean containsAny(String text, String chars) {
+        for (int i = 0; i < chars.length(); i++) {
+            if (text.indexOf(chars.charAt(i)) >= 0) return true;
+        }
+        return false;
+    }
 
     private static long num(String s) {
         return Long.parseLong(s.replace(",", ""));
@@ -72,18 +81,42 @@ final class StatsTracker {
         lastActionBarMs = now;
         lastActionBar = plain;
 
-        Matcher m = HP_AFTER.matcher(plain);
-        if (m.find() || (m = HP_BEFORE.matcher(plain)).find()) {
-            health = num(m.group(1));
-            maxHealth = num(m.group(2));
+        // health and mana: find the "123/456" pairs and decide by the symbol or word next to them
+        List<long[]> unknown = new ArrayList<>();
+        Matcher m = PAIR.matcher(plain);
+        while (m.find()) {
+            long cur = num(m.group(1)), max = num(m.group(2));
+            String around = plain.substring(Math.max(0, m.start() - 3), Math.min(plain.length(), m.end() + 8));
+            String lower = around.toLowerCase(Locale.ROOT);
+            boolean heart = containsAny(around, HEART_SYMBOLS);
+            boolean isMana = lower.contains("mana") || containsAny(around, MANA_SYMBOLS);
+            if (heart && !isMana) {
+                health = cur;
+                maxHealth = max;
+                lastHealthMs = now;
+            } else if (isMana && !heart) {
+                mana = cur;
+                maxMana = max;
+                lastManaMs = now;
+            } else {
+                unknown.add(new long[]{cur, max});
+            }
+        }
+        if (unknown.size() == 2 && lastHealthMs != now && lastManaMs != now) { // no symbols: first is health, second mana
+            health = unknown.get(0)[0];
+            maxHealth = unknown.get(0)[1];
             lastHealthMs = now;
+            mana = unknown.get(1)[0];
+            maxMana = unknown.get(1)[1];
+            lastManaMs = now;
         }
 
-        m = MANA.matcher(plain);
-        if (m.find() || (m = MANA_SYMBOL_AFTER.matcher(plain)).find() || (m = MANA_SYMBOL_BEFORE.matcher(plain)).find()) {
-            mana = num(m.group(1));
-            maxMana = num(m.group(2));
-            lastManaMs = now;
+        m = DEFENSE_BAR.matcher(plain);
+        if (m.find()) {
+            defense = num(m.group(1));
+            defenseLive = true;
+            lastDefenseMs = now;
+            RkeConfig.lastDefense = defense;
         }
 
         m = RIFT_LEFT.matcher(plain);
@@ -126,6 +159,12 @@ final class StatsTracker {
                 riftDamage = num(m.group(1));
                 riftDamageLive = true;
                 RkeConfig.lastRiftDamage = riftDamage;
+            }
+            m = DEFENSE_NAME.matcher(line);
+            if (m.find() && !fresh(lastDefenseMs)) { // the action bar value is more current
+                defense = num(m.group(1));
+                defenseLive = true;
+                RkeConfig.lastDefense = defense;
             }
         }
         if (!tabSpeed) { // no speed line in the tab list (e.g. in the Rift): use the movement speed attribute
@@ -211,6 +250,12 @@ final class StatsTracker {
                 riftDamageLive = true;
                 RkeConfig.lastRiftDamage = riftDamage;
             }
+            m = DEFENSE_NAME.matcher(name);
+            if (m.find()) {
+                defense = num(m.group(1));
+                defenseLive = true;
+                RkeConfig.lastDefense = defense;
+            }
         }
         statsMenuInfo = "\"" + title + "\", items with 'speed': " + (speedItems.isEmpty() ? "none" : speedItems);
     }
@@ -232,6 +277,7 @@ final class StatsTracker {
     static void init() {
         speed = RkeConfig.lastSpeed;
         riftDamage = RkeConfig.lastRiftDamage;
+        defense = RkeConfig.lastDefense;
     }
 
     private static List<String> tabLines(Minecraft mc) {
@@ -254,6 +300,10 @@ final class StatsTracker {
     /** A bar: how full it is (0..1) and the text in it. */
     record BarInfo(double frac, String text) {}
 
+    static boolean riftFresh() {
+        return fresh(lastRiftMs);
+    }
+
     private static boolean fresh(long time) {
         return System.currentTimeMillis() - time < FRESH_MS;
     }
@@ -266,10 +316,17 @@ final class StatsTracker {
         return v == Math.floor(v) ? String.valueOf((int) v) : String.format(Locale.US, "%.1f", v);
     }
 
-    /** Health: the real numbers from the action bar if it has them, otherwise the vanilla hearts (Rift). */
+    /**
+     * Health. In the Rift (and outside SkyBlock) it is the vanilla hearts (one heart = 1 point); everywhere else the
+     * real numbers come from the action bar.
+     */
     static BarInfo healthBar(Minecraft mc) {
-        if (health >= 0 && maxHealth > 0 && fresh(lastHealthMs)) {
-            return new BarInfo(Math.min(1.0, health / (double) maxHealth), fmt(health) + "/" + fmt(maxHealth));
+        boolean skyBlockNormal = SkyBlockState.onSkyBlock && !SkyBlockState.inRift;
+        if (skyBlockNormal) {
+            if (health >= 0 && maxHealth > 0 && fresh(lastHealthMs)) {
+                return new BarInfo(Math.min(1.0, health / (double) maxHealth), fmt(health) + "/" + fmt(maxHealth));
+            }
+            return new BarInfo(0, "-");
         }
         Player p = mc.player;
         if (p == null) return new BarInfo(0, "-");
@@ -288,6 +345,27 @@ final class StatsTracker {
         float progress = xpProgress(mc.player);
         double frac = progress > 0 ? progress : (riftMax <= 0 ? 0 : Math.min(1.0, riftSeconds / (double) riftMax));
         return new BarInfo(frac, riftText);
+    }
+
+    /**
+     * SkyBlock level bar (outside the Rift): the vanilla xp level is the SkyBlock level, the xp bar fill is the
+     * progress to the next level (100 xp per level).
+     */
+    static BarInfo levelBar(Minecraft mc) {
+        Player p = mc.player;
+        float progress = xpProgress(p);
+        int level = xpLevel(p);
+        if (progress < 0 || level < 0) return new BarInfo(0, "-");
+        return new BarInfo(Math.min(1.0, progress), "Lvl " + level + "  " + Math.round(progress * 100) + "/100 XP");
+    }
+
+    private static int xpLevel(Player p) {
+        if (p == null) return -1;
+        try {
+            return p.getClass().getField("experienceLevel").getInt(p);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return -1;
+        }
     }
 
     /** The vanilla xp bar fill (the Rift shows its time there). -1 if it cannot be read. */
@@ -314,7 +392,15 @@ final class StatsTracker {
                 + (RkeConfig.speedCalibrated ? " (calibrated)" : " (default)") + ", attribute base " + attributeBase(mc.player));
         out.add("Stats menu: " + statsMenuInfo);
         out.add("Action bar reader: " + ActionBarReader.status());
+        out.add("Mode: " + (SkyBlockState.inRift ? "Rift" : SkyBlockState.onSkyBlock ? "SkyBlock" : "not SkyBlock")
+                + " | Defense " + defense + (defenseLive ? " (seen)" : " (last known)"));
         out.add("Last action bar: " + (lastActionBar.isEmpty() ? "none seen yet" : lastActionBar));
+        StringBuilder escaped = new StringBuilder();
+        for (char c : lastActionBar.toCharArray()) {
+            if (c >= 32 && c < 127) escaped.append(c);
+            else escaped.append(String.format("\\u%04X", (int) c));
+        }
+        out.add("  with special characters shown: " + escaped);
         for (String line : tabLines(mc)) {
             String l = line.toLowerCase(Locale.ROOT);
             if (l.contains("speed") || l.contains("damage") || l.contains("rift") || line.contains("\u2726")) {

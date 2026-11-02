@@ -82,13 +82,12 @@ public final class CollectionTracker {
         return counts;
     }
 
-    /** The collection the player table compares on. */
-    static TrackedCollection compareCollection() {
-        String slug = RkeConfig.playerSlug;
+    /** The tracked collection with this Elite leaderboard name, or null. */
+    static TrackedCollection bySlug(String slug) {
         for (TrackedCollection c : RkeConfig.collections) {
             if (c.slug.equals(slug)) return c;
         }
-        return RkeConfig.collections.isEmpty() ? null : RkeConfig.collections.get(0);
+        return null;
     }
 
     static long lastSyncMs() {

@@ -15,13 +15,13 @@ import java.util.Locale;
  * an overall timer and an optional table of tracked players. Drawn at HUD scale RkeConfig.hudScale.
  */
 public final class TrackerHud {
-    private static final int PANEL_W = 200, TABLE_W = 240;
+    private static final int PANEL_W = 200, TABLE_W = 280;
     static final int PAD = 5;
     static final int HEADER_H = 15;
     private static final int CARD_H = 27, CARD_H_TIMERS = 38, GAP = 3;
     private static final int OVERALL_H = 13;
     private static final int EMPTY_BODY = 26;
-    private static final int TABLE_HEAD = 28, ROW_H = 11;
+    private static final int TABLE_HEAD = 18, ROW_H = 11;
 
     static final int GREEN = 0xFF7BD88F, RED = 0xFFE0524B, GOLD = 0xFFE8C468;
     static final int MUTED = 0xFF6B7078, LIGHT = 0xFFAEB4BC;
@@ -231,20 +231,14 @@ public final class TrackerHud {
 
     private static void drawTable(GuiGraphicsExtractor g, Font font, int w, int top) {
         if (!hasTable()) return;
-        TrackedCollection compare = CollectionTracker.compareCollection();
-        if (compare == null) return;
-        long ownTotal = compare.total();
 
         int cx = PAD, cx2 = w - PAD;
-        int cAmount = 150, cRank = 192, cDiff = w - 8;
+        int cColl = 76, cAmount = 200, cRank = 240, cDiff = w - 8;
 
         rect(g, 6, top, w - 6, top + 1, 0x22FFFFFF);
-        rect(g, 8, top + 6, 12, top + 10, compare.colorArgb());
-        String title = compare.name.length() > 24 ? compare.name.substring(0, 24) : compare.name;
-        g.text(font, "Comparing: " + title, 16, top + 5, LIGHT, false);
-
-        int hy = top + 17;
+        int hy = top + 6;
         g.text(font, "PLAYER", 8, hy, MUTED, false);
+        g.text(font, "COLLECTION", cColl, hy, MUTED, false);
         right(g, font, "AMOUNT", cAmount, hy, MUTED);
         right(g, font, "RANK", cRank, hy, MUTED);
         right(g, font, "YOU +/-", cDiff, hy, MUTED);
@@ -254,16 +248,22 @@ public final class TrackerHud {
         for (TrackedPlayers.Info info : TrackedPlayers.infos()) {
             if (i++ % 2 == 0) rect(g, cx, ry - 1, cx2, ry + 9, 0x12FFFFFF); // zebra stripe
 
-            String name = info.name.length() > 12 ? info.name.substring(0, 12) : info.name;
+            TrackedCollection coll = CollectionTracker.bySlug(info.slug); // the collection of this player
+            String name = info.name.length() > 10 ? info.name.substring(0, 10) : info.name;
             g.text(font, name, 8, ry, 0xFFFFFFFF, false);
+
+            String collName = coll == null ? "-" : (coll.name.length() > 11 ? coll.name.substring(0, 11) : coll.name);
+            if (coll != null) rect(g, cColl, ry + 2, cColl + 3, ry + 7, coll.colorArgb());
+            g.text(font, collName, cColl + 6, ry, LIGHT, false);
 
             if (info.amount >= 0) {
                 long theirs = Math.round(info.amount);
                 right(g, font, fmt(theirs), cAmount, ry, 0xFFCCCCCC);
                 right(g, font, info.rank > 0 ? "#" + fmt(info.rank) : "-", cRank, ry, GOLD);
 
-                if (ownTotal >= 0) {
-                    long d = ownTotal - theirs;
+                long own = coll == null ? -1 : coll.total();
+                if (own >= 0) {
+                    long d = own - theirs;
                     String diff = (d >= 0 ? "+" : "-") + fmt(Math.abs(d)); // + = you are ahead
                     right(g, font, diff, cDiff, ry, d >= 0 ? GREEN : RED);
                 } else {
