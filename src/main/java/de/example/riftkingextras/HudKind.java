@@ -7,7 +7,8 @@ enum HudKind {
     TRACKER("Move tracker HUD"),
     TIMEWARP("Move Timewarp HUD"),
     SCOREBOARD("Move scoreboard HUD"),
-    INVENTORY("Move inventory HUD");
+    INVENTORY("Move inventory HUD"),
+    MUSIC("Move music HUD");
 
     final String title;
 
@@ -21,6 +22,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twX;
             case SCOREBOARD -> ScoreboardConfig.x;
             case INVENTORY -> RkeConfig.invX;
+            case MUSIC -> MusicConfig.x;
         };
     }
 
@@ -30,6 +32,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twY;
             case SCOREBOARD -> ScoreboardConfig.y;
             case INVENTORY -> RkeConfig.invY;
+            case MUSIC -> MusicConfig.y;
         };
     }
 
@@ -39,6 +42,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twScale;
             case SCOREBOARD -> ScoreboardConfig.scale;
             case INVENTORY -> RkeConfig.invScale;
+            case MUSIC -> MusicConfig.scale;
         };
     }
 
@@ -48,6 +52,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twX = v;
             case SCOREBOARD -> ScoreboardConfig.x = v;
             case INVENTORY -> RkeConfig.invX = v;
+            case MUSIC -> MusicConfig.x = v;
         }
     }
 
@@ -57,6 +62,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twY = v;
             case SCOREBOARD -> ScoreboardConfig.y = v;
             case INVENTORY -> RkeConfig.invY = v;
+            case MUSIC -> MusicConfig.y = v;
         }
     }
 
@@ -66,6 +72,7 @@ enum HudKind {
             case TIMEWARP -> RkeConfig.twScale = v;
             case SCOREBOARD -> ScoreboardConfig.scale = v;
             case INVENTORY -> RkeConfig.invScale = v;
+            case MUSIC -> MusicConfig.scale = v;
         }
     }
 
@@ -75,6 +82,7 @@ enum HudKind {
             case TIMEWARP -> TimewarpHud.scaledWidth();
             case SCOREBOARD -> ScoreboardHud.scaledWidth();
             case INVENTORY -> InventoryHud.scaledWidth();
+            case MUSIC -> MusicHud.scaledWidth();
         };
     }
 
@@ -84,6 +92,7 @@ enum HudKind {
             case TIMEWARP -> TimewarpHud.scaledHeight();
             case SCOREBOARD -> ScoreboardHud.scaledHeight();
             case INVENTORY -> InventoryHud.scaledHeight();
+            case MUSIC -> MusicHud.scaledHeight();
         };
     }
 
@@ -110,6 +119,7 @@ enum HudKind {
             case TIMEWARP -> TimewarpHud.draw(g, x, y);
             case SCOREBOARD -> ScoreboardHud.draw(g, x, y);
             case INVENTORY -> InventoryHud.draw(g, x, y);
+            case MUSIC -> MusicHud.draw(g, x, y);
         }
     }
 
@@ -134,6 +144,11 @@ enum HudKind {
                 RkeConfig.invX = -1;
                 RkeConfig.invY = -1;
                 RkeConfig.invScale = 1.0f;
+            }
+            case MUSIC -> {
+                MusicConfig.x = -1;
+                MusicConfig.y = 8;
+                MusicConfig.scale = 1.0f;
             }
         }
     }

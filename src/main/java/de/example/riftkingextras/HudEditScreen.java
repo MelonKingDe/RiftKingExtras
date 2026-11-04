@@ -79,6 +79,7 @@ public class HudEditScreen extends Screen {
     public void removed() {
         RkeConfig.save();
         ScoreboardConfig.save();
+        MusicConfig.save();
     }
 
     @Override

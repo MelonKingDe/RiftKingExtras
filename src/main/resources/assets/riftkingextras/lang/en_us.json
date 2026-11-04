@@ -1,4 +1,10 @@
 {
   "key.category.riftkingextras.main": "RiftKingExtras",
-  "key.riftkingextras.open_settings": "Open settings"
+  "key.riftkingextras.open_settings": "Open settings",
+  "key.riftkingextras.music_next": "Music: next song",
+  "key.riftkingextras.music_previous": "Music: previous song",
+  "key.riftkingextras.music_restart": "Music: restart song",
+  "key.riftkingextras.music_play_pause": "Music: play / pause",
+  "key.riftkingextras.music_volume_up": "Music: volume up",
+  "key.riftkingextras.music_volume_down": "Music: volume down"
 }

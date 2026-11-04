@@ -25,6 +25,31 @@ processResources {
     filesMatching("fabric.mod.json") {
         expand "version": inputs.properties.version
     }
+
+    // The Windows music helper (built by buildMusicHelper) is packed into the jar
+    from("MusicHelper/publish") {
+        include "RiftKingMusicHelper.exe"
+        into "assets/riftkingextras/bin"
+    }
+}
+
+tasks.named("processResources") {
+    dependsOn("buildMusicHelper")
+}
+
+// Is the .NET SDK there? Without it the mod still builds, the music HUD then only works on Linux.
+def dotnetAvailable = false
+try {
+    dotnetAvailable = ["dotnet", "--version"].execute().waitFor() == 0
+} catch (Exception ignored) {
+    dotnetAvailable = false
+}
+
+tasks.register("buildMusicHelper", Exec) {
+    workingDir "MusicHelper"
+    commandLine "dotnet", "publish", "-c", "Release", "-r", "win-x64", "--self-contained", "true", "-o", "publish"
+    ignoreExitValue = true
+    onlyIf { dotnetAvailable }
 }
 
 // Jar file name without version: build/libs/NameTagMod.jar

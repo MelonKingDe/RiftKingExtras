@@ -30,6 +30,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         RkeConfig.load();
         ScoreboardConfig.load();
         StatsTracker.init();
+        MusicConfig.load();
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(MOD_ID, "tracker"),
@@ -60,6 +61,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                         || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL") || n.equals("OVERLAY_MESSAGE"),
                 InventoryHud::hidesStatusBars));
 
+        // Fifth HUD: music (now playing + synced lyrics)
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(MOD_ID, "music"),
+                (graphics, tracker) -> MusicHud.render(graphics));
+
         // Game messages: action bar (overlay) feeds the stats bars, normal chat feeds the Time Warp countdown
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             if (overlay) StatsTracker.onActionBar(ScoreboardModel.plain(message));
@@ -81,11 +87,17 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             SkyBlockState.tick(client);
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
+            MusicKeybinds.tick();
             InventoryHud.tick(client);
             MushroomBreaker.tick(client);
         });
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> CollectionTracker.persist());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            CollectionTracker.persist();
+            MusicManager.stop(); // closes the Windows helper
+        });
 
+        MusicKeybinds.register(category);
+        MusicManager.applyEnabled();
         CollectionApi.startScheduler();
         registerCommands();
     }
@@ -194,6 +206,22 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                 .then(ClientCommands.literal("reset").executes(ctx -> {
                                     CollectionTracker.resetSession();
                                     ctx.getSource().sendFeedback(Component.literal("Session gain and timers cleared."));
+                                    return 1;
+                                })))
+                        .then(ClientCommands.literal("music")
+                                .executes(ctx -> openScreen(MusicScreen::new))
+                                .then(ClientCommands.literal("hud")
+                                        .executes(ctx -> openScreen(p -> new HudEditScreen(p, HudKind.MUSIC))))
+                                .then(ClientCommands.literal("status").executes(ctx -> {
+                                    var source = ctx.getSource();
+                                    source.sendFeedback(Component.literal("Source: " + MusicManager.status()));
+                                    MusicState.Snapshot s = MusicState.get();
+                                    source.sendFeedback(Component.literal(s.active()
+                                            ? "Playing: " + s.title() + " - " + s.artist() + (s.playing() ? "" : " (paused)")
+                                            : "Nothing playing"));
+                                    source.sendFeedback(Component.literal("Lyrics: " + LyricsService.status()
+                                            + " (" + LyricsService.lines().size() + " lines), cover: "
+                                            + (MusicArt.ready() ? "loaded" : "none")));
                                     return 1;
                                 })))
                         .then(ClientCommands.literal("inventory")

@@ -77,6 +77,20 @@ Extras for Hypixel SkyBlock:
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
     (`/equipment`) is open and remembers it until you close the game.
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
+- **Music HUD:** a fifth HUD in the same style, modeled after the SpotifyOverlay mod. It shows what is playing: cover,
+  title (long titles scroll), artist, a progress bar with the times, and below it the **synced lyrics** that scroll
+  smoothly in time with the song (3, 5 or 7 lines, current line highlighted, timing adjustable in steps of 100 ms).
+  - **Works with the free version of Spotify, no Premium and no account link:** the song comes from the operating
+    system's media session (the one behind your media keys), the lyrics come from the free public service
+    [LRCLIB](https://lrclib.net) and are fetched while you play, nothing is stored in the mod. If LRCLIB has no synced
+    lyrics for a song, the HUD says so.
+  - Windows: a small helper program (`RiftKingMusicHelper.exe`, built from `MusicHelper/` and packed into the jar)
+    reads the media session. Linux: install `playerctl`. macOS is not supported.
+  - Keys (all changeable under Options > Controls): Right = next song, Left = previous, Down = restart the song,
+    Up = play/pause, Page Up / Page Down = volume of the Spotify app (the volume shows in the header for a moment).
+  - The profanity filter replaces strong swear words in the lyrics with stars (option, on by default).
+  - Settings: `/rke music`, position and size: `/rke music hud`, `/rke music status` shows the source, the song, the
+    lyrics state and the cover. Without a song playing the editor shows a sample.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -107,6 +121,9 @@ For any other collection, list the items in `itemNames` of that collection in `c
 /rke collections     add or remove tracked collections
 /rke players         add or remove tracked players
 /rke hud             move the HUD
+/rke music           music HUD settings
+/rke music hud       move and resize the music HUD
+/rke music status    what the music HUD currently reads
 /rke inventory       inventory HUD settings
 /rke inventory hud   move and resize the inventory HUD
 /rke stats           show what the inventory HUD read (health, mana, rift time, speed, items, hooks)
@@ -129,9 +146,13 @@ sent to Mojang (name -> UUID) and the UUID to the Elite API. Please make sure yo
 sharing the mod with others.
 
 ## Building (GitHub)
-1. Create a new GitHub repository and upload the contents of this folder (keep `.github/`).
+1. Create a new GitHub repository and upload the contents of this folder (keep `.github/` and `MusicHelper/`).
 2. Open the **Actions** tab, wait for the `build` run, then download the artifact **RiftKingExtras-jar**.
 3. Put `RiftKingExtras.jar` into your `mods` folder (needs Fabric Loader + Fabric API for 26.2, Java 25).
+
+The workflow installs the .NET 8 SDK and builds the Windows music helper into the jar (the jar is about 40 MB because
+the helper brings its own runtime). If a local build has no `dotnet`, the mod still builds, but the music HUD then only
+works on Linux.
 
 Local build: `gradle wrapper && ./gradlew build` (JDK 25) -> `build/libs/RiftKingExtras.jar` (not the `-sources.jar`).
 
@@ -144,6 +165,9 @@ The places most likely to need a fix:
 - `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `AbstractContainerScreen`, `Player.inventoryMenu`; the item draw methods and the selected hotbar slot are found by reflection (`/rke stats` shows `Items: ...`)
 - `ItemRarity`: `DataComponents.LORE` / `ItemLore.lines()`
 - `StatsTracker`: `mc.getConnection().getOnlinePlayers()`, `PlayerInfo.getTabListDisplayName()`
+- `MusicArt`: `NativeImage.read(...)`, `DynamicTexture`, `TextureManager.register(...)`, `RenderPipelines.GUI_TEXTURED` (copied from the SpotifyOverlay code, which runs on 26.1)
+- `MusicKeybinds`: `InputConstants.KEY_RIGHT/LEFT/UP/DOWN/PAGEUP/PAGEDOWN`
+- `MusicHelper/`: the C# helper needs the .NET 8 SDK; if the Windows part does not build, send me the log of the `buildMusicHelper` step
 - `ScoreboardReader`: the scoreboard classes (`Scoreboard`, `Objective`, `PlayerScoreEntry`, `PlayerTeam`, `DisplaySlot`)
 - `RiftKingExtrasClient`: `HudElementRegistry.replaceElement(...)` with the id `scoreboard_sidebar`
 - `ScoreboardHud`: `text(...)` with a `Component`, `mc.debugEntries.isOverlayVisible()`, `mc.options.keyPlayerList.isDown()`
@@ -151,5 +175,8 @@ The places most likely to need a fix:
 - `CollectionsScreen` / `TrackedPlayersScreen`: `EditBox.getValue()` / `setHint(...)`
 
 ## Credits
+The music HUD is modeled after the SpotifyOverlay mod (CC0, public domain); `MusicHelper/` is a rewrite of its helper and
+`VolumeControl.cs` comes from it.
+
 The scoreboard feature set is modeled after the CustomScoreboard mod by meowdding (LGPL 2.1), used with its author's
 friend's permission for personal use. RiftKingExtras contains its own implementation and no code from that mod.
