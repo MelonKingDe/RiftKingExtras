@@ -47,7 +47,7 @@ try {
 
 tasks.register("buildMusicHelper", Exec) {
     workingDir "MusicHelper"
-    commandLine "dotnet", "publish", "-c", "Release", "-r", "win-x64", "--self-contained", "true", "-o", "publish"
+    commandLine "dotnet", "publish", "-c", "Release", "-r", "win-x64", "--self-contained", "false", "-o", "publish"
     ignoreExitValue = true
     onlyIf { dotnetAvailable }
 }

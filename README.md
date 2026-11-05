@@ -85,7 +85,8 @@ Extras for Hypixel SkyBlock:
     [LRCLIB](https://lrclib.net) and are fetched while you play, nothing is stored in the mod. If LRCLIB has no synced
     lyrics for a song, the HUD says so.
   - Windows: a small helper program (`RiftKingMusicHelper.exe`, built from `MusicHelper/` and packed into the jar)
-    reads the media session. Linux: install `playerctl`. macOS is not supported.
+    reads the media session. It uses the **.NET 8 Runtime (x64)**, which must be installed on the PC (the plain runtime is
+    enough, not the SDK or the Desktop runtime). Linux: install `playerctl`. macOS is not supported.
   - Keys (all changeable under Options > Controls): Right = next song, Left = previous, Down = restart the song,
     Up = play/pause, Page Up / Page Down = volume of the Spotify app (the volume shows in the header for a moment).
   - The profanity filter replaces strong swear words in the lyrics with stars (option, on by default).
@@ -150,9 +151,9 @@ sharing the mod with others.
 2. Open the **Actions** tab, wait for the `build` run, then download the artifact **RiftKingExtras-jar**.
 3. Put `RiftKingExtras.jar` into your `mods` folder (needs Fabric Loader + Fabric API for 26.2, Java 25).
 
-The workflow installs the .NET 8 SDK and builds the Windows music helper into the jar (the jar is about 40 MB because
-the helper brings its own runtime). If a local build has no `dotnet`, the mod still builds, but the music HUD then only
-works on Linux.
+The workflow installs the .NET 8 SDK and builds the Windows music helper into the jar. The helper does not bring its own
+runtime, so it stays small; it needs the .NET 8 Runtime on the PC where you play. If a local build has no `dotnet`, the
+mod still builds, but the music HUD then only works on Linux.
 
 Local build: `gradle wrapper && ./gradlew build` (JDK 25) -> `build/libs/RiftKingExtras.jar` (not the `-sources.jar`).
 

@@ -75,10 +75,22 @@ final class WindowsMusicSource implements MusicSource {
                 writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream(), StandardCharsets.UTF_8));
                 status = "Windows media session (helper running)";
 
+                boolean gotOutput = false;
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
-                    while (running && (line = reader.readLine()) != null) handle(line);
+                    while (running && (line = reader.readLine()) != null) {
+                        gotOutput = true;
+                        handle(line);
+                    }
+                }
+                if (!gotOutput && running) {
+                    // it ended without a single line: almost always the .NET 8 runtime is missing
+                    status = "helper did not start: install the .NET 8 Runtime (x64) from dotnet.microsoft.com";
+                    writer = null;
+                    MusicManager.push(MusicState.Snapshot.INACTIVE, null);
+                    Thread.sleep(30_000);
+                    continue;
                 }
                 status = "helper stopped, restarting";
             } catch (MissingHelperException e) {
@@ -87,6 +99,9 @@ final class WindowsMusicSource implements MusicSource {
                 return;
             } catch (IOException e) {
                 status = "helper failed: " + e.getMessage();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
             writer = null;
             MusicManager.push(MusicState.Snapshot.INACTIVE, null);
