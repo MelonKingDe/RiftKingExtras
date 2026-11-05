@@ -38,9 +38,10 @@ public final class CollectionTracker {
                 if (menuOpen || c.lastInvCount < 0) {
                     c.lastInvCount = counts[i];
                 } else {
-                    if (counts[i] > c.lastInvCount) {
-                        c.onPickup(counts[i] - c.lastInvCount);
-                        anyGain = true;
+                    if (counts[i] < c.lastInvCount) {
+                        c.onLoss(c.lastInvCount - counts[i]); // dropped or thrown
+                    } else if (counts[i] > c.lastInvCount) {
+                        if (c.onPickup(counts[i] - c.lastInvCount) > 0) anyGain = true; // 0 = picked up its own drop
                     }
                     c.lastInvCount = counts[i];
                 }

@@ -173,6 +173,22 @@ final class ScoreboardModel {
                 .append(Component.literal(time).withColor(0xFFFFFF));
     }
 
+    private static Component pingLine() {
+        int ping = NetStats.ping(Minecraft.getInstance());
+        MutableComponent line = Component.literal("Ping: ").withColor(0x9AA0A6);
+        if (ping < 0) return line.append(Component.literal("-").withColor(0xFFFFFF));
+        int color = ping < 80 ? 0x7BD88F : ping < 150 ? 0xE8C468 : 0xE0524B;
+        return line.append(Component.literal(ping + " ms").withColor(color));
+    }
+
+    private static Component tpsLine() {
+        double tps = NetStats.tps();
+        MutableComponent line = Component.literal("TPS: ").withColor(0x9AA0A6);
+        if (tps < 0) return line.append(Component.literal("-").withColor(0xFFFFFF));
+        int color = tps >= 18 ? 0x7BD88F : tps >= 15 ? 0xE8C468 : 0xE0524B;
+        return line.append(Component.literal(String.format(Locale.US, "%.1f", tps)).withColor(color));
+    }
+
     private static Component timewarpLine() {
         MutableComponent line = Component.literal("Time Warp: ").withColor(0x9AA0A6);
         if (TimewarpTracker.running()) {
@@ -216,6 +232,8 @@ final class ScoreboardModel {
                 case SEPARATOR -> lines.add(Line.sep());
                 case IRL_TIME -> lines.add(Line.of(irlLine()));
                 case TIMEWARP -> lines.add(Line.of(timewarpLine()));
+                case PING -> lines.add(Line.of(pingLine()));
+                case TPS -> lines.add(Line.of(tpsLine()));
                 case FOOTER -> {
                     if (ScoreboardConfig.useCustomFooter && !ScoreboardConfig.customFooter.isBlank()) {
                         lines.add(Line.of(AmpText.parse(ScoreboardConfig.customFooter)));

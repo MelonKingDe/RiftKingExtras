@@ -46,9 +46,16 @@ final class ActionBarReader {
         if (field == null) return;
         try {
             Object value = field.get(mc.gui);
+            if (!(value instanceof Component)) {
+                last = ""; // the action bar is gone: the same text can arrive again later and counts as new
+                return;
+            }
             if (value instanceof Component c) {
                 String plain = ScoreboardModel.plain(c);
-                if (plain.isEmpty()) return;
+                if (plain.isEmpty()) {
+                    last = "";
+                    return;
+                }
                 if (plain.equals(last)) {
                     StatsTracker.touchActionBar();
                 } else {

@@ -11,6 +11,7 @@ import net.minecraft.world.inventory.Slot;
 import org.joml.Matrix3x2fStack;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -34,7 +35,8 @@ public final class InventoryHud {
     private static final int[] EQUIPMENT_MENU_SLOTS = {10, 19, 28, 37};
 
     /** Items and rarity colors, rebuilt a few times per second. */
-    private record Snap(ItemStack[] equip, ItemStack[] armor, ItemStack[] inv, int[] equipC, int[] armorC, int[] invC) {}
+    private record Snap(ItemStack[] equip, ItemStack[] armor, ItemStack[] inv, int[] equipC, int[] armorC, int[] invC,
+                        List<List<AbilityCooldowns.AbilityInfo>> abilities) {}
 
     private static volatile Snap snap = null;
     private static final ItemStack[] equipCache = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
@@ -73,7 +75,11 @@ public final class InventoryHud {
             ItemStack[] inv = new ItemStack[36];
             for (int i = 0; i < 36; i++) inv[i] = p.getInventory().getItem(i);
             ItemStack[] equip = readEquipment(mc, p);
-            snap = new Snap(equip, armor, inv, colors(equip), colors(armor), colors(inv));
+            // abilities (and their cooldowns) of the hotbar items, for the cooldown timers
+            List<List<AbilityCooldowns.AbilityInfo>> abilities = new ArrayList<>();
+            for (int i = 0; i < 9; i++) abilities.add(RkeConfig.abilityTimers ? AbilityCooldowns.parse(inv[i]) : List.of());
+            AbilityCooldowns.setHotbar(abilities);
+            snap = new Snap(equip, armor, inv, colors(equip), colors(armor), colors(inv), abilities);
         } catch (RuntimeException e) {
             snap = null; // never break the game because of an unexpected inventory
         }
@@ -89,7 +95,22 @@ public final class InventoryHud {
      * SkyBlock keeps the equipment out of the normal inventory. It is read when the "Your Equipment and Stats"
      * menu (/equipment) is open and remembered for the rest of the session.
      */
+    private static boolean restored = false;
+
     private static ItemStack[] readEquipment(Minecraft mc, Player p) {
+        // once per game start: bring back the equipment saved in the config (needs a loaded world for the item data)
+        if (!restored && mc.level != null) {
+            restored = true;
+            if (allEmpty(equipCache)) {
+                boolean any = false;
+                for (int k = 0; k < 4; k++) {
+                    ItemStack saved = EquipmentStore.decode(RkeConfig.equipmentJson[k], mc.level.registryAccess());
+                    equipCache[k] = saved;
+                    if (!saved.isEmpty()) any = true;
+                }
+                if (any) equipSource = "restored from the last game session (open /equipment to refresh)";
+            }
+        }
         if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen
                 && screen.getTitle().getString().contains("Equipment")) {
             List<Slot> slots = screen.getMenu().slots;
@@ -101,6 +122,17 @@ public final class InventoryHud {
                 equipCache[k] = empty ? ItemStack.EMPTY : s.copy();
             }
             equipSource = "read from the equipment menu";
+
+            // keep it for the next game start
+            boolean changed = false;
+            for (int k = 0; k < 4; k++) {
+                String json = EquipmentStore.encode(equipCache[k], mc.level.registryAccess());
+                if (!json.equals(RkeConfig.equipmentJson[k])) {
+                    RkeConfig.equipmentJson[k] = json;
+                    changed = true;
+                }
+            }
+            if (changed) RkeConfig.save();
         } else if (allEmpty(equipCache)) {
             // some setups show the equipment in the four crafting slots of the inventory
             List<Slot> slots = p.inventoryMenu.slots;
@@ -194,7 +226,8 @@ public final class InventoryHud {
         }
         for (int c = 0; c < 9; c++) {
             slot(g, font, s == null ? ItemStack.EMPTY : s.inv()[c], s == null ? 0 : s.invC()[c],
-                    GRID_X + c * PITCH, HOTBAR_Y, c == selected);
+                    GRID_X + c * PITCH, HOTBAR_Y, c == selected,
+                    s == null ? null : AbilityCooldowns.stateOf(s.abilities().get(c)));
         }
 
         // bottom row: speed (left), time/level bar (middle), rift damage or defense (right)
@@ -241,6 +274,12 @@ public final class InventoryHud {
 
     /** One item slot: faint background, 1 pixel frame in the rarity color, the item, and a marker if selected. */
     private static void slot(GuiGraphicsExtractor g, Font font, ItemStack stack, int rarity, int x, int y, boolean selected) {
+        slot(g, font, stack, rarity, x, y, selected, null);
+    }
+
+    /** Like above; [cooldown] (hotbar only) darkens the item and shows the seconds until its ability is ready. */
+    private static void slot(GuiGraphicsExtractor g, Font font, ItemStack stack, int rarity, int x, int y,
+                             boolean selected, AbilityCooldowns.State cooldown) {
         int bg = rarity != 0 ? TrackerHud.withAlpha(rarity, 0x26) : 0x1AFFFFFF;
         TrackerHud.rrect(g, x, y, x + SLOT, y + SLOT, bg);
         if (rarity != 0) TrackerHud.border(g, x, y, x + SLOT, y + SLOT, rarity);
@@ -253,6 +292,21 @@ public final class InventoryHud {
                 String name = stack.getHoverName().getString().strip();
                 if (!name.isEmpty()) g.text(font, name.substring(0, 1), x + 6, y + 5, rarity != 0 ? rarity : 0xFFFFFFFF, true);
             }
+        }
+        if (cooldown != null && !stack.isEmpty()) {
+            // like the vanilla cooldown: a dark layer that shrinks as the time runs out, plus the seconds
+            double left = cooldown.totalMs() > 0 ? Math.min(1.0, cooldown.remainingMs() / (double) cooldown.totalMs()) : 1.0;
+            int top = y + 1 + (int) Math.floor(16 * (1.0 - left));
+            TrackerHud.rect(g, x + 1, top, x + 17, y + 17, 0xA0000000);
+            long secs = (cooldown.remainingMs() + 999) / 1000;
+            String text = secs >= 60 ? (secs / 60) + ":" + String.format(Locale.ROOT, "%02d", secs % 60) : String.valueOf(secs);
+            float textScale = 0.8f;
+            Matrix3x2fStack pose = g.pose();
+            pose.pushMatrix();
+            pose.translate(x + (SLOT - font.width(text) * textScale) / 2f, y + (SLOT - 8 * textScale) / 2f);
+            pose.scale(textScale, textScale);
+            g.text(font, text, 0, 0, 0xFFFFFFFF, true);
+            pose.popMatrix();
         }
         if (selected) TrackerHud.border(g, x - 1, y - 1, x + SLOT + 1, y + SLOT + 1, SELECTED);
     }

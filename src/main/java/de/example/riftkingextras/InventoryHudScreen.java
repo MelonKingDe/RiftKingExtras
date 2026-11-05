@@ -29,10 +29,11 @@ public class InventoryHudScreen extends Screen {
         toggle(x, y + step * 2, w, "Hide vanilla hotbar", () -> RkeConfig.hideHotbar, v -> RkeConfig.hideHotbar = v);
         toggle(x, y + step * 3, w, "Hide hearts, xp bar, action bar", () -> RkeConfig.hideVanillaBars, v -> RkeConfig.hideVanillaBars = v);
         toggle(x, y + step * 4, w, "Rarity frames", () -> RkeConfig.rarityBorders, v -> RkeConfig.rarityBorders = v);
+        toggle(x, y + step * 5, w, "Ability cooldown timers", () -> RkeConfig.abilityTimers, v -> RkeConfig.abilityTimers = v);
 
         this.addRenderableWidget(Button.builder(Component.literal("Move inventory HUD"),
                 btn -> this.minecraft.gui.setScreen(new HudEditScreen(this, HudKind.INVENTORY)))
-                .bounds(x, y + step * 5 + 6, w, 20).build());
+                .bounds(x, y + step * 6 + 6, w, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());

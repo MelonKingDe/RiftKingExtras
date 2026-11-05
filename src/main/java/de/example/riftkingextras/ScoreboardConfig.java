@@ -87,7 +87,7 @@ public final class ScoreboardConfig {
                 SbElement.LOBBY, SbElement.DATE, SbElement.TIME, SbElement.AREA, SbElement.SEPARATOR,
                 SbElement.PURSE, SbElement.BITS, SbElement.CURRENCY, SbElement.SEPARATOR,
                 SbElement.OBJECTIVE, SbElement.SLAYER, SbElement.EVENT, SbElement.OTHER, SbElement.SEPARATOR,
-                SbElement.IRL_TIME, SbElement.TIMEWARP, SbElement.FOOTER};
+                SbElement.IRL_TIME, SbElement.TIMEWARP, SbElement.PING, SbElement.TPS, SbElement.FOOTER};
         List<Entry> list = new ArrayList<>();
         for (SbElement e : order) list.add(new Entry(e, e.defaultEnabled));
         return list;

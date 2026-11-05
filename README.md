@@ -11,6 +11,10 @@ Extras for Hypixel SkyBlock:
   color made from its name; to pick your own, set `"color": "#FF8800"` for that collection in
   `config/riftkingextras.json`. A thin line at the bottom of each card shows how much time is left until the rate timer
   pauses. Position **and size** (25% to 200%) are set under Move HUD (`/rke hud`).
+- **Dropped items:** dropping an item and picking it up again is no gain (what you dropped is remembered for 5 minutes,
+  the time an item needs to despawn). If Elite shows less than the mod shows, pickups of the last 10 minutes are kept
+  (Elite can be a few minutes behind), anything beyond that was counted wrongly and is removed from the total and from
+  the +N.
 - **Gains you did not see:** when the Elite value is higher than what the mod counted (e.g. items taken out of a minion
   menu, or 1 Hemoglass = 160 Hemovibe), the difference is added to the green +N of the session. Items per hour still
   uses only what was seen entering the inventory.
@@ -36,7 +40,8 @@ Extras for Hypixel SkyBlock:
 - **Scoreboard HUD:** the Hypixel SkyBlock sidebar redrawn in the same style as the other HUDs (dark rounded panel,
   title in the header, accent colored line, thin separators). The vanilla sidebar is hidden while it is shown.
   - Lines are sorted into elements (date & lobby code, SkyBlock date, time, area, purse/piggy, bits, other currencies,
-    objective, slayer quest, events, other lines, footer) plus two extras: real time and the Minion Time Warp cooldown.
+    objective, slayer quest, events, other lines, footer) plus extras: real time, the Minion Time Warp cooldown, **ping**
+    and **server TPS** (the TPS is an estimate from the corrections of the world time that the server sends).
     Under `Lines & order` every element can be switched on/off and moved up/down, and separators can be added or removed.
   - Numbers of currency lines can be shown as on Hypixel, short (1.2M) or long (1,234,567).
   - Custom title and custom footer with `&` color codes, accent color, text shadow, text and title alignment, line
@@ -76,6 +81,14 @@ Extras for Hypixel SkyBlock:
     `/rke stats` shows what was read and what arrives.
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
     (`/equipment`) is open and remembers it until you close the game.
+  - **Ability cooldown timers:** hotbar items with an ability (e.g. Weird Tuba) get a timer. The mod reads the ability
+    and its cooldown from the item lore. When you use it, SkyBlock shows its name in the action bar (`-120 Mana (Howl)`):
+    that starts the timer. The item is darkened like with the vanilla cooldown, the layer shrinks, and the seconds left
+    are shown on it. Cooldown reductions (e.g. from your class) are not known to the mod, so the timer can run longer
+    than the real cooldown. Only abilities that cost mana show their name in the action bar, so only those are timed.
+    Switch it off with "Ability cooldown timers".
+  - The **equipment** is saved in the config when you open `/equipment`, so it is still there after a restart (the
+    saved items are read again once you are in a world).
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
 - **Music HUD:** a fifth HUD in the same style, modeled after the SpotifyOverlay mod. It shows what is playing: cover,
   title (long titles scroll), artist, a progress bar with the times, and below it the **synced lyrics** that scroll
@@ -165,6 +178,9 @@ The places most likely to need a fix:
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
 - `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `AbstractContainerScreen`, `Player.inventoryMenu`; the item draw methods and the selected hotbar slot are found by reflection (`/rke stats` shows `Items: ...`)
 - `ItemRarity`: `DataComponents.LORE` / `ItemLore.lines()`
+- `EquipmentStore`: `ItemStack.CODEC`, `RegistryOps.create(JsonOps.INSTANCE, ...)`, `mc.level.registryAccess()`
+- `NetStats`: `mc.level.getGameTime()`, `ClientPacketListener.getPlayerInfo(UUID)`, `PlayerInfo.getLatency()`
+- `AbilityCooldowns`: `DataComponents.LORE` / `ItemLore.lines()`
 - `StatsTracker`: `mc.getConnection().getOnlinePlayers()`, `PlayerInfo.getTabListDisplayName()`
 - `MusicArt`: `NativeImage.read(...)`, `DynamicTexture`, `TextureManager.register(...)`, `RenderPipelines.GUI_TEXTURED` (copied from the SpotifyOverlay code, which runs on 26.1)
 - `MusicKeybinds`: `InputConstants.KEY_RIGHT/LEFT/UP/DOWN/PAGEUP/PAGEDOWN`

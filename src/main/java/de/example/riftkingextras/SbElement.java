@@ -15,6 +15,8 @@ enum SbElement {
     OTHER("Other lines", true),
     IRL_TIME("Real time", false),
     TIMEWARP("Minion Time Warp", false),
+    PING("Ping", true),
+    TPS("Server TPS (estimate)", true),
     SEPARATOR("Separator", true),
     FOOTER("Footer", true);
 

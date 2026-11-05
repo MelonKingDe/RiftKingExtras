@@ -87,6 +87,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             SkyBlockState.tick(client);
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
+            NetStats.tick(client);
             MusicKeybinds.tick();
             InventoryHud.tick(client);
             MushroomBreaker.tick(client);

@@ -1,6 +1,8 @@
 package de.example.riftkingextras;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -26,6 +28,13 @@ public final class TrackedCollection {
     private transient volatile long localGain = 0;   // only what was seen entering the inventory (used for items/hour)
     private transient boolean syncedThisSession = false;
     transient int lastInvCount = -1;
+
+    // pickups that Elite has not confirmed yet: {time, amount}, oldest first
+    private transient final ArrayDeque<long[]> pendingEntries = new ArrayDeque<>();
+    private transient long droppedPool = 0;   // dropped or thrown by you: picking it up again is no gain
+    private transient long lastDropMs = 0;
+    private static final long CONFIRM_MS = 600_000L;     // Elite should know a pickup after 10 minutes
+    private static final long DROP_MEMORY_MS = 300_000L; // a dropped item despawns after 5 minutes
     private transient final RateTimer timer = new RateTimer(); // own rate timer with auto pause
 
     /** Collections that are fed by several items: every listed item counts as 1. */
@@ -103,13 +112,30 @@ public final class TrackedCollection {
         }
         apiValue = savedTotal;
         pending = 0;
+        pendingEntries.clear();
     }
 
-    void onPickup(long diff) {
-        sessionGain += diff;
-        localGain += diff;
-        pending += diff;
-        timer.onGain(); // a gain starts or resumes the rate timer
+    /** Items left the inventory without a menu (dropped, thrown): picking them up again is not a gain. */
+    synchronized void onLoss(long diff) {
+        droppedPool += diff;
+        lastDropMs = System.currentTimeMillis();
+    }
+
+    /** Items entered the inventory. Returns how much of it counts as a gain (not what you dropped before). */
+    synchronized long onPickup(long diff) {
+        long now = System.currentTimeMillis();
+        if (now - lastDropMs > DROP_MEMORY_MS) droppedPool = 0;
+        long back = Math.min(droppedPool, diff);
+        droppedPool -= back;
+        long gained = diff - back;
+        if (gained > 0) {
+            sessionGain += gained;
+            localGain += gained;
+            pending += gained;
+            pendingEntries.addLast(new long[]{now, gained});
+            timer.onGain(); // a gain starts or resumes the rate timer
+        }
+        return gained;
     }
 
     /** Called every client tick while in a world. */
@@ -121,19 +147,54 @@ public final class TrackedCollection {
         timer.resetClock();
     }
 
-    /** New values from Elite: whatever Elite does not know yet stays pending. */
+    /**
+     * New values from Elite.
+     * - Elite is higher than what we show: gained without seeing it (minion menu, sacks, e.g. 1 Hemoglass = 160
+     *   Hemovibe); the difference belongs in the +N of this session.
+     * - Elite is lower: pickups of the last 10 minutes may simply not be in Elite yet and stay; whatever is missing
+     *   beyond that was counted wrongly, so it is removed from the total and from the gain.
+     */
     synchronized void applyApi(long value, long newRank) {
+        long now = System.currentTimeMillis();
         if (newRank >= 0) rank = (int) newRank;
         if (value >= 0) {
             long shown = total();
-            // Elite is higher than what we counted: gained without seeing it enter the inventory
-            // (minion menu, sacks, e.g. 1 Hemoglass = 160 Hemovibe). It belongs in the +N of this session.
-            if (syncedThisSession && shown >= 0 && value > shown) sessionGain += value - shown;
-            apiValue = value;
-            pending = shown < 0 ? 0 : Math.max(0, shown - value);
+            if (shown >= 0 && value < shown) {
+                long missing = shown - value;
+                long recent = 0;
+                for (long[] e : pendingEntries) if (now - e[0] <= CONFIRM_MS) recent += e[1];
+
+                long unconfirmed = Math.min(missing, recent);
+                long overcount = missing - unconfirmed; // Elite should have it by now: counted wrongly
+                if (overcount > 0) {
+                    sessionGain = Math.max(0, sessionGain - overcount);
+                    localGain = Math.max(0, localGain - overcount);
+                }
+
+                // keep the newest entries that add up to the unconfirmed amount
+                ArrayDeque<long[]> kept = new ArrayDeque<>();
+                long keep = unconfirmed;
+                Iterator<long[]> it = pendingEntries.descendingIterator();
+                while (it.hasNext() && keep > 0) {
+                    long[] e = it.next();
+                    if (now - e[0] > CONFIRM_MS) continue;
+                    long take = Math.min(e[1], keep);
+                    kept.addFirst(new long[]{e[0], take});
+                    keep -= take;
+                }
+                pendingEntries.clear();
+                pendingEntries.addAll(kept);
+                apiValue = value;
+                pending = unconfirmed;
+            } else {
+                if (syncedThisSession && shown >= 0 && value > shown) sessionGain += value - shown;
+                apiValue = value;
+                pendingEntries.clear();
+                pending = 0;
+            }
             syncedThisSession = true;
         }
-        calibratedMs = System.currentTimeMillis();
+        calibratedMs = now;
     }
 
     /** Copies the shown value into the field that gets saved. */

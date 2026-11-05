@@ -77,6 +77,7 @@ final class StatsTracker {
 
     /** Called with the cleaned text of every new action bar. */
     static void onActionBar(String plain) {
+        AbilityCooldowns.onActionBar(plain); // an ability use starts its cooldown timer
         long now = System.currentTimeMillis();
         lastActionBarMs = now;
         lastActionBar = plain;
