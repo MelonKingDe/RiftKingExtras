@@ -6,6 +6,7 @@
   "description": "Client-side extras for Hypixel SkyBlock: multi-collection tracker HUD with player comparison and a mushroom helper.",
   "license": "MIT",
   "environment": "client",
+  "mixins": ["riftkingextras.mixins.json"],
   "entrypoints": {
     "client": ["de.example.riftkingextras.RiftKingExtrasClient"]
   },

@@ -1,9 +1,11 @@
 package de.example.riftkingextras;
 
+import de.example.riftkingextras.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -113,26 +115,35 @@ public final class InventoryHud {
         }
         if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen
                 && screen.getTitle().getString().contains("Equipment")) {
-            List<Slot> slots = screen.getMenu().slots;
-            for (int k = 0; k < 4; k++) {
-                int index = EQUIPMENT_MENU_SLOTS[k];
-                if (index >= slots.size()) continue;
-                ItemStack s = slots.get(index).getItem();
-                boolean empty = s.isEmpty() || s.getHoverName().getString().toLowerCase(Locale.ROOT).contains("empty");
-                equipCache[k] = empty ? ItemStack.EMPTY : s.copy();
-            }
-            equipSource = "read from the equipment menu";
-
-            // keep it for the next game start
-            boolean changed = false;
-            for (int k = 0; k < 4; k++) {
-                String json = EquipmentStore.encode(equipCache[k], mc.level.registryAccess());
-                if (!json.equals(RkeConfig.equipmentJson[k])) {
-                    RkeConfig.equipmentJson[k] = json;
-                    changed = true;
+            List<Slot> slots = ((AbstractContainerScreenAccessor) screen).riftkingextras$getMenu().slots;
+            // wait until the menu has its content, otherwise empty slots would wipe the saved equipment
+            boolean loaded = false;
+            for (int i = 0; i < Math.min(27, slots.size()); i++) {
+                if (!slots.get(i).getItem().isEmpty()) {
+                    loaded = true;
+                    break;
                 }
             }
-            if (changed) RkeConfig.save();
+            if (loaded) {
+                for (int k = 0; k < 4; k++) {
+                    int index = EQUIPMENT_MENU_SLOTS[k];
+                    if (index >= slots.size()) continue;
+                    ItemStack s = slots.get(index).getItem();
+                    equipCache[k] = isPlaceholder(s) ? ItemStack.EMPTY : s.copy();
+                }
+                equipSource = "read from the equipment menu";
+
+                // keep it for the next game start
+                boolean changed = false;
+                for (int k = 0; k < 4; k++) {
+                    String json = EquipmentStore.encode(equipCache[k], mc.level.registryAccess());
+                    if (!json.equals(RkeConfig.equipmentJson[k])) {
+                        RkeConfig.equipmentJson[k] = json;
+                        changed = true;
+                    }
+                }
+                if (changed) RkeConfig.save();
+            }
         } else if (allEmpty(equipCache)) {
             // some setups show the equipment in the four crafting slots of the inventory
             List<Slot> slots = p.inventoryMenu.slots;
@@ -148,6 +159,18 @@ public final class InventoryHud {
                 if (any) equipSource = "read from the crafting slots";
             }
         }
+        return equipCache.clone();
+    }
+
+    /** An empty equipment slot is shown as a glass pane or an item called "Empty ... Slot". */
+    private static boolean isPlaceholder(ItemStack s) {
+        if (s.isEmpty()) return true;
+        if (BuiltInRegistries.ITEM.getKey(s.getItem()).getPath().endsWith("glass_pane")) return true;
+        return s.getHoverName().getString().toLowerCase(Locale.ROOT).contains("empty");
+    }
+
+    /** The four equipment items (necklace, cloak, belt, gloves) as last seen in the equipment menu. */
+    static ItemStack[] equipment() {
         return equipCache.clone();
     }
 

@@ -1,5 +1,6 @@
 package de.example.riftkingextras;
 
+import de.example.riftkingextras.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -237,7 +238,7 @@ final class StatsTracker {
         if (!title.toLowerCase(Locale.ROOT).contains("stat")) return;
 
         List<String> speedItems = new ArrayList<>();
-        for (Slot slot : screen.getMenu().slots) {
+        for (Slot slot : ((AbstractContainerScreenAccessor) screen).riftkingextras$getMenu().slots) {
             ItemStack stack = slot.getItem();
             if (stack.isEmpty()) continue;
             String name = ScoreboardModel.plain(stack.getHoverName());

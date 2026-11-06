@@ -29,6 +29,16 @@ final class ItemRarity {
 
     private ItemRarity() {}
 
+    /** Frame of an empty slot, and of an item that has no rarity line (as in RiftKingInv). */
+    static final int EMPTY = 0xFF3A3A44, FALLBACK = 0xFF9A9A9A;
+
+    /** The frame color for any slot: rarity color, gray for an item without rarity, dark gray for an empty slot. */
+    static int frameColor(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return EMPTY;
+        int rarity = colorOf(stack);
+        return rarity != 0 ? rarity : FALLBACK;
+    }
+
     /** The rarity color as ARGB, or 0 if the item has no rarity line. */
     static int colorOf(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return 0;

@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -88,6 +89,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
             NetStats.tick(client);
+            // the inventory screen (E) becomes the RiftKingExtras one
+            if (RkeConfig.customInventory && client.player != null
+                    && client.gui.screen() instanceof InventoryScreen) {
+                client.gui.setScreen(new RiftInventoryScreen(client.player));
+            }
             MusicKeybinds.tick();
             InventoryHud.tick(client);
             MushroomBreaker.tick(client);

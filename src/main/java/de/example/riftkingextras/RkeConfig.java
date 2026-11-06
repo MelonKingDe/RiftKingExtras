@@ -33,6 +33,7 @@ public final class RkeConfig {
     public static volatile boolean hideHotbar = true;
     public static volatile boolean hideVanillaBars = true; // hearts, xp bar + level, action bar
     public static volatile boolean rarityBorders = true;
+    public static volatile boolean customInventory = true; // the inventory screen (E) in the RiftKingExtras style
     public static volatile boolean abilityTimers = true; // cooldown timers on hotbar items with an ability
     public static final String[] equipmentJson = {"", "", "", ""}; // the 4 equipment items, saved as JSON text
     public static volatile long lastSpeed = -1, lastRiftDamage = -1, lastDefense = -1; // last values seen (tab list, /stats menu, attribute)
@@ -79,7 +80,7 @@ public final class RkeConfig {
         boolean speedCalibrated = false;
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
-        boolean abilityTimers = true;
+        boolean abilityTimers = true, customInventory = true;
         String[] equipment = {"", "", "", ""};
         List<TrackedCollection> collections = new ArrayList<>();
         List<PlayerEntry> trackedPlayers = new ArrayList<>();
@@ -105,7 +106,7 @@ public final class RkeConfig {
                     if (d.timewarpMessage != null && !d.timewarpMessage.isBlank()) timewarpMessage = d.timewarpMessage;
                     invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
-                    abilityTimers = d.abilityTimers;
+                    abilityTimers = d.abilityTimers; customInventory = d.customInventory;
                     if (d.equipment != null && d.equipment.length == 4) {
                         for (int i = 0; i < 4; i++) equipmentJson[i] = d.equipment[i] == null ? "" : d.equipment[i];
                     }
@@ -157,7 +158,7 @@ public final class RkeConfig {
             d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
-            d.abilityTimers = abilityTimers;
+            d.abilityTimers = abilityTimers; d.customInventory = customInventory;
             d.equipment = equipmentJson.clone();
             d.lastSpeed = lastSpeed; d.lastRiftDamage = lastRiftDamage; d.lastDefense = lastDefense;
             d.speedScale = speedScale; d.speedCalibrated = speedCalibrated;

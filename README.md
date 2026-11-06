@@ -80,14 +80,14 @@ Extras for Hypixel SkyBlock:
     The action bar is read directly from the game, so hiding it does not stop the mod from reading it.
     `/rke stats` shows what was read and what arrives.
   - SkyBlock keeps the equipment out of the normal inventory: the mod reads it when the "Your Equipment and Stats" menu
-    (`/equipment`) is open and remembers it until you close the game.
+    (`/stats`) is open, remembers it and saves it in the config.
   - **Ability cooldown timers:** hotbar items with an ability (e.g. Weird Tuba) get a timer. The mod reads the ability
     and its cooldown from the item lore. When you use it, SkyBlock shows its name in the action bar (`-120 Mana (Howl)`):
     that starts the timer. The item is darkened like with the vanilla cooldown, the layer shrinks, and the seconds left
     are shown on it. Cooldown reductions (e.g. from your class) are not known to the mod, so the timer can run longer
     than the real cooldown. Only abilities that cost mana show their name in the action bar, so only those are timed.
     Switch it off with "Ability cooldown timers".
-  - The **equipment** is saved in the config when you open `/equipment`, so it is still there after a restart (the
+  - The **equipment** is saved in the config when you open `/stats`, so it is still there after a restart (the
     saved items are read again once you are in a world).
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
 - **Music HUD:** a fifth HUD in the same style, modeled after the SpotifyOverlay mod. It shows what is playing: cover,
@@ -105,6 +105,14 @@ Extras for Hypixel SkyBlock:
   - The profanity filter replaces strong swear words in the lyrics with stars (option, on by default).
   - Settings: `/rke music`, position and size: `/rke music hud`, `/rke music status` shows the source, the song, the
     lyrics state and the cover. Without a song playing the editor shows a sample.
+- **Inventory screen (key E):** all features of the RiftKingInv mod, in the style of the HUDs. The normal inventory is
+  replaced by a dark rounded panel with the RiftKingExtras header: armor on the left, the four **equipment** items
+  (necklace, cloak, belt, gloves) on the right, your character in the middle, the inventory and hotbar below. Every slot
+  has a **1 pixel frame in the rarity color** of its item (gray for an item without rarity, dark gray for an empty slot).
+  Two columns of **menu buttons** sit at the sides; left click and right click open different SkyBlock menus (hover for
+  the command): collection / recipes, quests / chapters, skills / levels, guides, craft, storage / sacks, pets /
+  loadouts, warps / is. A click on an equipment slot runs `/stats`. Switch it off with "Inventory screen (E)" under
+  `/rke inventory`. **Remove the RiftKingInv jar**, both mods would replace the inventory.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -176,7 +184,8 @@ The places most likely to need a fix:
 - `TrackerHud.rect(...)`: the fill method of `GuiGraphicsExtractor` (everything in the HUD is drawn with it)
 - `MushroomBreaker`: `mc.hitResult`, `mc.gameMode.startDestroyBlock(...)`, `swing(...)`
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
-- `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `AbstractContainerScreen`, `Player.inventoryMenu`; the item draw methods and the selected hotbar slot are found by reflection (`/rke stats` shows `Items: ...`)
+- `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `Player.inventoryMenu`; the selected hotbar slot is found by reflection
+- `mixin/SlotAccessor`, `mixin/AbstractContainerScreenAccessor`, `RiftInventoryScreen`: taken over from RiftKingInv, which builds on 26.2 (item drawing, `fill`, `text(Component)`, tooltips and the character preview are verified by it)
 - `ItemRarity`: `DataComponents.LORE` / `ItemLore.lines()`
 - `EquipmentStore`: `ItemStack.CODEC`, `RegistryOps.create(JsonOps.INSTANCE, ...)`, `mc.level.registryAccess()`
 - `NetStats`: `mc.level.getGameTime()`, `ClientPacketListener.getPlayerInfo(UUID)`, `PlayerInfo.getLatency()`
@@ -192,6 +201,8 @@ The places most likely to need a fix:
 - `CollectionsScreen` / `TrackedPlayersScreen`: `EditBox.getValue()` / `setHint(...)`
 
 ## Credits
+The inventory screen comes from RiftKingInv (also by MelonKingDe).
+
 The music HUD is modeled after the SpotifyOverlay mod (CC0, public domain); `MusicHelper/` is a rewrite of its helper and
 `VolumeControl.cs` comes from it.
 

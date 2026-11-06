@@ -8,32 +8,36 @@ import net.minecraft.network.chat.Component;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/** Settings of the inventory HUD. Open with /rke inventory or from the settings screen. */
+/** Settings of the inventory HUD and the inventory screen. Open with /rke inventory or from the settings screen. */
 public class InventoryHudScreen extends Screen {
     private final Screen parent;
 
     public InventoryHudScreen(Screen parent) {
-        super(Component.literal("Inventory HUD"));
+        super(Component.literal("Inventory"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        int w = 220;
-        int x = this.width / 2 - w / 2;
-        int y = 34;
+        int w = Math.min(170, (this.width - 30) / 2);
+        int left = this.width / 2 - w - 5;
+        int right = this.width / 2 + 5;
+        int y = 40;
         int step = 24;
 
-        toggle(x, y, w, "Inventory HUD", () -> RkeConfig.invEnabled, v -> RkeConfig.invEnabled = v);
-        toggle(x, y + step, w, "Only on SkyBlock", () -> RkeConfig.invOnlySkyBlock, v -> RkeConfig.invOnlySkyBlock = v);
-        toggle(x, y + step * 2, w, "Hide vanilla hotbar", () -> RkeConfig.hideHotbar, v -> RkeConfig.hideHotbar = v);
-        toggle(x, y + step * 3, w, "Hide hearts, xp bar, action bar", () -> RkeConfig.hideVanillaBars, v -> RkeConfig.hideVanillaBars = v);
-        toggle(x, y + step * 4, w, "Rarity frames", () -> RkeConfig.rarityBorders, v -> RkeConfig.rarityBorders = v);
-        toggle(x, y + step * 5, w, "Ability cooldown timers", () -> RkeConfig.abilityTimers, v -> RkeConfig.abilityTimers = v);
-
+        // left: the HUD at the bottom of the screen
+        toggle(left, y, w, "Inventory HUD", () -> RkeConfig.invEnabled, v -> RkeConfig.invEnabled = v);
+        toggle(left, y + step, w, "Only on SkyBlock", () -> RkeConfig.invOnlySkyBlock, v -> RkeConfig.invOnlySkyBlock = v);
+        toggle(left, y + step * 2, w, "Hide vanilla hotbar", () -> RkeConfig.hideHotbar, v -> RkeConfig.hideHotbar = v);
+        toggle(left, y + step * 3, w, "Hide hearts/xp/action bar", () -> RkeConfig.hideVanillaBars, v -> RkeConfig.hideVanillaBars = v);
         this.addRenderableWidget(Button.builder(Component.literal("Move inventory HUD"),
                 btn -> this.minecraft.gui.setScreen(new HudEditScreen(this, HudKind.INVENTORY)))
-                .bounds(x, y + step * 6 + 6, w, 20).build());
+                .bounds(left, y + step * 4 + 6, w, 20).build());
+
+        // right: items and the inventory screen (key E)
+        toggle(right, y, w, "Rarity frames (HUD)", () -> RkeConfig.rarityBorders, v -> RkeConfig.rarityBorders = v);
+        toggle(right, y + step, w, "Ability cooldown timers", () -> RkeConfig.abilityTimers, v -> RkeConfig.abilityTimers = v);
+        toggle(right, y + step * 2, w, "Inventory screen (E)", () -> RkeConfig.customInventory, v -> RkeConfig.customInventory = v);
 
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
@@ -51,10 +55,13 @@ public class InventoryHudScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        String title = "Inventory HUD";
-        graphics.text(this.font, title, this.width / 2 - this.font.width(title) / 2, 10, 0xFFFFFFFF, true);
-        String hint = "Equipment is read when you open /equipment once.";
-        graphics.text(this.font, hint, this.width / 2 - this.font.width(hint) / 2, 22, 0xFFAAAAAA, false);
+        int cx = this.width / 2;
+        center(graphics, "Inventory", cx, 10, 0xFFFFFFFF);
+        center(graphics, "Equipment is read when you open /stats once.", cx, 24, 0xFFAAAAAA);
+    }
+
+    private void center(GuiGraphicsExtractor graphics, String text, int cx, int y, int color) {
+        graphics.text(this.font, text, cx - this.font.width(text) / 2, y, color, true);
     }
 
     @Override
