@@ -2,6 +2,6 @@
   "required": true,
   "package": "de.example.riftkingextras.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["SlotAccessor", "AbstractContainerScreenAccessor"],
+  "client": ["SlotAccessor", "AbstractContainerScreenAccessor", "ClientPacketListenerMixin"],
   "injectors": { "defaultRequire": 1 }
 }

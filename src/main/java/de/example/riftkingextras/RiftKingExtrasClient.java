@@ -228,7 +228,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                             : "Nothing playing"));
                                     source.sendFeedback(Component.literal("Lyrics: " + LyricsService.status()
                                             + " (" + LyricsService.lines().size() + " lines), cover: "
-                                            + (MusicArt.ready() ? "loaded" : "none")));
+                                            + MusicArt.info()));
                                     return 1;
                                 })))
                         .then(ClientCommands.literal("inventory")

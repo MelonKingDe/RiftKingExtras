@@ -30,10 +30,14 @@ final class AbilityCooldowns {
     private static final Pattern COOLDOWN = Pattern.compile(
             "^Cooldown:\\s*(?:(\\d+)h)?\\s*(?:(\\d+)m)?\\s*(?:(\\d+(?:\\.\\d+)?)s)?", Pattern.CASE_INSENSITIVE);
     private static final Pattern USED = Pattern.compile("(\\d[\\d,]*)\\s*Mana\\s*\\(([^)]+)\\)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MANA_SPENT = Pattern.compile("-\\s*\\d[\\d,]*\\s*Mana", Pattern.CASE_INSENSITIVE);
 
     /** ability name (lower case) -> {end time, whole cooldown} */
     private static final Map<String, long[]> RUNNING = new ConcurrentHashMap<>();
     private static volatile List<List<AbilityInfo>> hotbar = List.of();
+    private static volatile List<String> hotbarNames = List.of();
+    private static volatile String lastManaMessage = "none seen yet";
+    private static volatile String lastResult = "-";
 
     private AbilityCooldowns() {}
 
@@ -66,26 +70,72 @@ final class AbilityCooldowns {
         return out;
     }
 
-    /** The abilities of the nine hotbar items (set by the inventory HUD). */
-    static void setHotbar(List<List<AbilityInfo>> abilities) {
+    /** The abilities and the names of the nine hotbar items (set by the inventory HUD). */
+    static void setHotbar(List<List<AbilityInfo>> abilities, List<String> names) {
         hotbar = abilities;
+        hotbarNames = names;
     }
 
-    /** Called with every new action bar text: an ability use ("-120 Mana (Howl)") starts the timer. */
+    private static void start(AbilityInfo ability) {
+        RUNNING.put(ability.name().toLowerCase(Locale.ROOT),
+                new long[]{System.currentTimeMillis() + ability.cooldownMs(), ability.cooldownMs()});
+    }
+
+    /**
+     * Called with every new action bar text. SkyBlock shows an ability use as "-120 Mana (Howl)": the name in the
+     * brackets is matched with the abilities (and the item names) of the hotbar. If mana was spent but no name matches,
+     * the item in your hand is taken.
+     */
     static void onActionBar(String plain) {
         if (!RkeConfig.abilityTimers) return;
+        boolean manaSpent = MANA_SPENT.matcher(plain).find();
+        if (manaSpent) lastManaMessage = plain;
+
+        boolean started = false;
         Matcher m = USED.matcher(plain);
         while (m.find()) {
             String used = m.group(2).trim().toLowerCase(Locale.ROOT);
-            for (List<AbilityInfo> item : hotbar) {
-                for (AbilityInfo ability : item) {
+            for (int slot = 0; slot < hotbar.size(); slot++) {
+                String itemName = slot < hotbarNames.size() ? hotbarNames.get(slot).toLowerCase(Locale.ROOT) : "";
+                for (AbilityInfo ability : hotbar.get(slot)) {
                     String name = ability.name().toLowerCase(Locale.ROOT);
-                    if (name.equals(used) || name.contains(used) || used.contains(name)) {
-                        RUNNING.put(name, new long[]{System.currentTimeMillis() + ability.cooldownMs(), ability.cooldownMs()});
+                    boolean byAbility = name.equals(used) || name.contains(used) || used.contains(name);
+                    boolean byItem = !itemName.isEmpty() && (itemName.equals(used) || itemName.contains(used) || used.contains(itemName));
+                    if (byAbility || byItem) {
+                        start(ability);
+                        started = true;
+                        lastResult = "started " + ability.name() + " (" + ability.cooldownMs() / 1000 + "s) for slot " + (slot + 1);
                     }
                 }
             }
         }
+
+        if (!started && manaSpent) {
+            int held = InventoryHud.selectedHotbar();
+            if (held >= 0 && held < hotbar.size() && !hotbar.get(held).isEmpty()) {
+                AbilityInfo ability = hotbar.get(held).get(0);
+                start(ability);
+                lastResult = "mana spent, no name matched: used the held item (" + ability.name() + ")";
+            } else {
+                lastResult = "mana spent but no hotbar ability matches and the held item has none";
+            }
+        }
+    }
+
+    /** Lines for /rke stats: what was read from the hotbar and what happened at the last ability use. */
+    static List<String> debug() {
+        List<String> out = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        for (int slot = 0; slot < hotbar.size(); slot++) {
+            if (hotbar.get(slot).isEmpty()) continue;
+            if (sb.length() > 0) sb.append("; ");
+            sb.append(slot + 1).append(": ");
+            for (AbilityInfo a : hotbar.get(slot)) sb.append(a.name()).append(" ").append(a.cooldownMs() / 1000).append("s ");
+        }
+        out.add("Hotbar abilities: " + (sb.length() == 0 ? "none found in the item lore" : sb.toString().trim()));
+        out.add("Last mana message: " + lastManaMessage);
+        out.add("Last ability result: " + lastResult);
+        return out;
     }
 
     /** The running cooldown of an item (the longest one if it has several abilities), or null if none runs. */

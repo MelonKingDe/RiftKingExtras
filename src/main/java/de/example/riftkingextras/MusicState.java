@@ -13,6 +13,11 @@ final class MusicState {
             return durationMs > 0 ? Math.min(p, durationMs) : p;
         }
 
+        /** Identifies the cover: the length can arrive late and must not make the cover disappear. */
+        String artKey() {
+            return title + "|" + artist + "|" + album;
+        }
+
         /** Identifies the song (a new key = a new song). */
         String key() {
             return title + "|" + artist + "|" + durationMs;

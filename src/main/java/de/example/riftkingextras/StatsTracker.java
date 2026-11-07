@@ -412,6 +412,8 @@ final class StatsTracker {
         out.add("Items: " + ItemDraw.status());
         out.add("Equipment: " + InventoryHud.equipmentInfo());
         out.add("Hooks: " + InventoryHud.hookInfo());
+        out.addAll(AbilityCooldowns.debug());
+        out.add("Ping: " + NetStats.ping(mc) + " ms (" + NetStats.pingInfo() + ")");
         return out;
     }
 }

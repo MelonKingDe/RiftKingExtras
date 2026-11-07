@@ -47,15 +47,27 @@ final class MusicManager {
         return s == null ? "off" : s.status();
     }
 
+    private static long trackStartMs = 0;
+    private static long lastResendMs = 0;
+
     /** Called by the source threads with every update; [artwork] is only set when a new cover arrived. */
     static void push(MusicState.Snapshot snapshot, byte[] artwork) {
-        String key = snapshot.active() ? snapshot.key() : "";
+        long now = System.currentTimeMillis();
+        String key = snapshot.active() ? snapshot.artKey() : "";
         if (!key.equals(lastKey)) {
             lastKey = key;
+            trackStartMs = now;
             MusicArt.clear(); // a new song: forget the old cover until the new one arrives
         }
         MusicState.update(snapshot);
         if (artwork != null && artwork.length > 0) MusicArt.submit(artwork);
+
+        // no cover after a few seconds: ask the Windows helper to read and send it again
+        if (snapshot.active() && !MusicArt.ready() && !MusicArt.pending()
+                && now - trackStartMs > 3000 && now - lastResendMs > 5000) {
+            lastResendMs = now;
+            send("artwork");
+        }
         LyricsService.onSnapshot(snapshot);
     }
 }

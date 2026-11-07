@@ -62,6 +62,15 @@ public class MusicScreen extends Screen {
                 btn -> this.minecraft.gui.setScreen(new HudEditScreen(this, HudKind.MUSIC)))
                 .bounds(right, y + step * 2, w, 20).build());
 
+        // controls: work with the free version of Spotify (they use the Windows/Linux media controls)
+        int cy = this.height - 52;
+        this.addRenderableWidget(Button.builder(Component.literal("|<  Previous"), btn -> MusicManager.send("previous"))
+                .bounds(this.width / 2 - 155, cy, 100, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Play / pause"), btn -> MusicManager.send("playpause"))
+                .bounds(this.width / 2 - 50, cy, 100, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Next  >|"), btn -> MusicManager.send("next"))
+                .bounds(this.width / 2 + 55, cy, 100, 20).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
     }
@@ -81,7 +90,7 @@ public class MusicScreen extends Screen {
         int cx = this.width / 2;
         center(graphics, "Music HUD", cx, 10, 0xFFFFFFFF);
         center(graphics, "Works with the free version of Spotify. Lyrics come from LRCLIB.", cx, 24, 0xFFAAAAAA);
-        center(graphics, "Source: " + MusicManager.status(), cx, this.height - 44, 0xFF9AA0A6);
+        center(graphics, "Source: " + MusicManager.status(), cx, this.height - 66, 0xFF9AA0A6);
     }
 
     private void center(GuiGraphicsExtractor graphics, String text, int cx, int y, int color) {

@@ -29,12 +29,25 @@ final class MusicArt {
     });
 
     private static volatile boolean ready = false;
+    private static volatile boolean pending = false;
+    private static volatile int received = 0;
+    private static volatile String lastError = "none";
     private static volatile int generation = 0;
 
     private MusicArt() {}
 
     static boolean ready() {
         return ready;
+    }
+
+    static boolean pending() {
+        return pending;
+    }
+
+    /** For /rke music status. */
+    static String info() {
+        return (ready ? "loaded" : pending ? "loading" : "none") + " (images received: " + received
+                + ", last error: " + lastError + ")";
     }
 
     /** A new song started: stop drawing the old cover and drop covers that are still being prepared. */
@@ -46,6 +59,8 @@ final class MusicArt {
     /** Decodes the image (any format Java can read, usually JPEG or PNG) and uploads it as the cover. */
     static void submit(byte[] bytes) {
         final int gen = generation;
+        received++;
+        pending = true;
         EXEC.execute(() -> {
             try {
                 NativeImage image = NativeImage.read(squarePng(bytes));
@@ -53,13 +68,18 @@ final class MusicArt {
                 mc.execute(() -> {
                     if (gen != generation) { // the song changed meanwhile
                         image.close();
+                        pending = false;
                         return;
                     }
                     mc.getTextureManager().register(ID, new DynamicTexture(() -> "riftkingextras music cover", image));
                     ready = true;
+                    pending = false;
+                    lastError = "none";
                 });
             } catch (Exception e) {
                 ready = false;
+                pending = false;
+                lastError = e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
             }
         });
     }

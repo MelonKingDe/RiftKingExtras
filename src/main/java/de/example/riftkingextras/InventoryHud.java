@@ -41,8 +41,11 @@ public final class InventoryHud {
                         List<List<AbilityCooldowns.AbilityInfo>> abilities) {}
 
     private static volatile Snap snap = null;
-    private static final ItemStack[] equipCache = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
-    private static String equipSource = "none yet - open /equipment once";
+    // two sets: the equipment outside of the Rift and the one in the Rift
+    private static final ItemStack[] equipNormal = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
+    private static final ItemStack[] equipRift = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
+    private static String equipSource = "none yet - open /stats once";
+    private static String equipMenuInfo = "no equipment menu opened yet";
     private static volatile String hookInfo = "not registered yet";
     private static int ticks = 0;
 
@@ -53,7 +56,7 @@ public final class InventoryHud {
 
     static String hookInfo() { return hookInfo; }
     static void setHookInfo(String info) { hookInfo = info; }
-    static String equipmentInfo() { return equipSource; }
+    static String equipmentInfo() { return equipSource + " | " + equipMenuInfo; }
 
     /** True while this HUD is shown (it then replaces the vanilla hotbar). */
     static boolean isShowing() {
@@ -76,11 +79,13 @@ public final class InventoryHud {
                     p.getItemBySlot(EquipmentSlot.LEGS), p.getItemBySlot(EquipmentSlot.FEET)};
             ItemStack[] inv = new ItemStack[36];
             for (int i = 0; i < 36; i++) inv[i] = p.getInventory().getItem(i);
-            ItemStack[] equip = readEquipment(mc, p);
+            ItemStack[] equip = readEquipment(mc);
             // abilities (and their cooldowns) of the hotbar items, for the cooldown timers
             List<List<AbilityCooldowns.AbilityInfo>> abilities = new ArrayList<>();
             for (int i = 0; i < 9; i++) abilities.add(RkeConfig.abilityTimers ? AbilityCooldowns.parse(inv[i]) : List.of());
-            AbilityCooldowns.setHotbar(abilities);
+            List<String> names = new ArrayList<>();
+            for (int i = 0; i < 9; i++) names.add(inv[i].isEmpty() ? "" : inv[i].getHoverName().getString().strip());
+            AbilityCooldowns.setHotbar(abilities, names);
             snap = new Snap(equip, armor, inv, colors(equip), colors(armor), colors(inv), abilities);
         } catch (RuntimeException e) {
             snap = null; // never break the game because of an unexpected inventory
@@ -93,28 +98,44 @@ public final class InventoryHud {
         return out;
     }
 
-    /**
-     * SkyBlock keeps the equipment out of the normal inventory. It is read when the "Your Equipment and Stats"
-     * menu (/equipment) is open and remembered for the rest of the session.
-     */
+    /** The equipment set for where you are: the Rift set in the Rift, the normal set everywhere else. */
+    private static ItemStack[] currentSet() {
+        return SkyBlockState.inRift ? equipRift : equipNormal;
+    }
+
     private static boolean restored = false;
 
-    private static ItemStack[] readEquipment(Minecraft mc, Player p) {
-        // once per game start: bring back the equipment saved in the config (needs a loaded world for the item data)
+    /** Menus that show the equipment: "Your Equipment and Stats" (/stats) and the loadouts menu (/loadouts). */
+    private static boolean isEquipmentMenu(String title) {
+        String t = title.toLowerCase(Locale.ROOT);
+        return t.contains("equipment") || t.contains("loadout");
+    }
+
+    private static boolean restore(ItemStack[] set, String[] saved, Minecraft mc) {
+        boolean any = false;
+        for (int k = 0; k < 4; k++) {
+            ItemStack item = EquipmentStore.decode(saved[k], mc.level.registryAccess());
+            set[k] = item;
+            if (!item.isEmpty()) any = true;
+        }
+        return any;
+    }
+
+    /**
+     * SkyBlock keeps the equipment out of the normal inventory. It is read while the equipment menu (/stats) or the
+     * loadouts menu is open, saved per set (Rift or normal) and restored at the next game start.
+     */
+    private static ItemStack[] readEquipment(Minecraft mc) {
+        // once per game start: bring back the saved equipment (needs a loaded world for the item data)
         if (!restored && mc.level != null) {
             restored = true;
-            if (allEmpty(equipCache)) {
-                boolean any = false;
-                for (int k = 0; k < 4; k++) {
-                    ItemStack saved = EquipmentStore.decode(RkeConfig.equipmentJson[k], mc.level.registryAccess());
-                    equipCache[k] = saved;
-                    if (!saved.isEmpty()) any = true;
-                }
-                if (any) equipSource = "restored from the last game session (open /equipment to refresh)";
-            }
+            boolean any = restore(equipNormal, RkeConfig.equipmentJson, mc);
+            any |= restore(equipRift, RkeConfig.riftEquipmentJson, mc);
+            if (any) equipSource = "restored from the last game session (open /stats to refresh)";
         }
-        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen
-                && screen.getTitle().getString().contains("Equipment")) {
+
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen && isEquipmentMenu(screen.getTitle().getString())) {
+            String title = screen.getTitle().getString();
             List<Slot> slots = ((AbstractContainerScreenAccessor) screen).riftkingextras$getMenu().slots;
             // wait until the menu has its content, otherwise empty slots would wipe the saved equipment
             boolean loaded = false;
@@ -125,41 +146,34 @@ public final class InventoryHud {
                 }
             }
             if (loaded) {
+                boolean rift = SkyBlockState.inRift;
+                ItemStack[] set = currentSet();
+                String[] saved = rift ? RkeConfig.riftEquipmentJson : RkeConfig.equipmentJson;
+                StringBuilder names = new StringBuilder();
                 for (int k = 0; k < 4; k++) {
                     int index = EQUIPMENT_MENU_SLOTS[k];
                     if (index >= slots.size()) continue;
                     ItemStack s = slots.get(index).getItem();
-                    equipCache[k] = isPlaceholder(s) ? ItemStack.EMPTY : s.copy();
+                    set[k] = isPlaceholder(s) ? ItemStack.EMPTY : s.copy();
+                    if (names.length() > 0) names.append(" | ");
+                    names.append(s.isEmpty() ? "-" : s.getHoverName().getString().strip());
                 }
-                equipSource = "read from the equipment menu";
+                equipSource = "read from \"" + title + "\" (" + (rift ? "Rift" : "normal") + " set)";
+                equipMenuInfo = "slots 10/19/28/37 of \"" + title + "\": " + names;
 
                 // keep it for the next game start
                 boolean changed = false;
                 for (int k = 0; k < 4; k++) {
-                    String json = EquipmentStore.encode(equipCache[k], mc.level.registryAccess());
-                    if (!json.equals(RkeConfig.equipmentJson[k])) {
-                        RkeConfig.equipmentJson[k] = json;
+                    String json = EquipmentStore.encode(set[k], mc.level.registryAccess());
+                    if (!json.equals(saved[k])) {
+                        saved[k] = json;
                         changed = true;
                     }
                 }
                 if (changed) RkeConfig.save();
             }
-        } else if (allEmpty(equipCache)) {
-            // some setups show the equipment in the four crafting slots of the inventory
-            List<Slot> slots = p.inventoryMenu.slots;
-            if (slots.size() > 4) {
-                boolean any = false;
-                for (int k = 0; k < 4; k++) {
-                    ItemStack s = slots.get(k + 1).getItem();
-                    if (!s.isEmpty()) {
-                        equipCache[k] = s.copy();
-                        any = true;
-                    }
-                }
-                if (any) equipSource = "read from the crafting slots";
-            }
         }
-        return equipCache.clone();
+        return currentSet().clone();
     }
 
     /** An empty equipment slot is shown as a glass pane or an item called "Empty ... Slot". */
@@ -171,12 +185,18 @@ public final class InventoryHud {
 
     /** The four equipment items (necklace, cloak, belt, gloves) as last seen in the equipment menu. */
     static ItemStack[] equipment() {
-        return equipCache.clone();
+        return currentSet().clone();
     }
 
     private static boolean allEmpty(ItemStack[] stacks) {
         for (ItemStack s : stacks) if (!s.isEmpty()) return false;
         return true;
+    }
+
+    /** The selected hotbar slot (0-8) of the player, or -1. */
+    static int selectedHotbar() {
+        Player p = Minecraft.getInstance().player;
+        return p == null ? -1 : selectedSlot(p);
     }
 
     /** The selected hotbar slot. Looked up by reflection (method or field name differs between versions). */

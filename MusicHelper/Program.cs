@@ -9,6 +9,11 @@ namespace RiftKingMusicHelper;
 
 internal static class Program
 {
+    // shared with the command reader: "artwork" asks for the cover to be read and sent again
+    private static string lastKey = "";
+    private static string artwork = "";
+    private static int artworkTries = 0;
+
     private static async Task Main()
     {
         Console.OutputEncoding = new System.Text.UTF8Encoding(false);
@@ -26,9 +31,6 @@ internal static class Program
 
         _ = Task.Run(() => ReadCommands(manager));
 
-        string lastKey = "";
-        string artwork = "";
-        int artworkTries = 0;
         float volume = -1f;
         long lastVolumeCheck = 0;
 
@@ -63,7 +65,7 @@ internal static class Program
 
                 // The cover can arrive a moment after the title, so try a few times; send it only once.
                 string? artworkToSend = null;
-                if (artwork.Length == 0 && artworkTries < 20)
+                if (artwork.Length == 0 && artworkTries < 40)
                 {
                     artworkTries++;
                     artwork = await ReadThumbnail(props);
@@ -139,6 +141,7 @@ internal static class Program
 
             try
             {
+                if (command == "artwork") { artwork = ""; artworkTries = 0; continue; }
                 if (command == "volume_up") { VolumeControl.Adjust(0.02f); continue; }
                 if (command == "volume_down") { VolumeControl.Adjust(-0.02f); continue; }
 

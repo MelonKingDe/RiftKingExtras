@@ -35,7 +35,8 @@ public final class RkeConfig {
     public static volatile boolean rarityBorders = true;
     public static volatile boolean customInventory = true; // the inventory screen (E) in the RiftKingExtras style
     public static volatile boolean abilityTimers = true; // cooldown timers on hotbar items with an ability
-    public static final String[] equipmentJson = {"", "", "", ""}; // the 4 equipment items, saved as JSON text
+    public static final String[] equipmentJson = {"", "", "", ""};     // the 4 equipment items outside the Rift, as JSON text
+    public static final String[] riftEquipmentJson = {"", "", "", ""}; // the 4 equipment items in the Rift
     public static volatile long lastSpeed = -1, lastRiftDamage = -1, lastDefense = -1; // last values seen (tab list, /stats menu, attribute)
     public static volatile double speedScale = 1000.0;    // speed = movement speed attribute * speedScale
     public static volatile boolean speedCalibrated = false;
@@ -82,6 +83,7 @@ public final class RkeConfig {
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
         boolean abilityTimers = true, customInventory = true;
         String[] equipment = {"", "", "", ""};
+        String[] riftEquipment = {"", "", "", ""};
         List<TrackedCollection> collections = new ArrayList<>();
         List<PlayerEntry> trackedPlayers = new ArrayList<>();
         List<String> players = new ArrayList<>(); // old format, only read
@@ -109,6 +111,9 @@ public final class RkeConfig {
                     abilityTimers = d.abilityTimers; customInventory = d.customInventory;
                     if (d.equipment != null && d.equipment.length == 4) {
                         for (int i = 0; i < 4; i++) equipmentJson[i] = d.equipment[i] == null ? "" : d.equipment[i];
+                    }
+                    if (d.riftEquipment != null && d.riftEquipment.length == 4) {
+                        for (int i = 0; i < 4; i++) riftEquipmentJson[i] = d.riftEquipment[i] == null ? "" : d.riftEquipment[i];
                     }
                     if (d.invScale >= 0.25f && d.invScale <= 2.0f) invScale = d.invScale;
                     lastSpeed = d.lastSpeed; lastRiftDamage = d.lastRiftDamage; lastDefense = d.lastDefense;
@@ -160,6 +165,7 @@ public final class RkeConfig {
             d.rarityBorders = rarityBorders;
             d.abilityTimers = abilityTimers; d.customInventory = customInventory;
             d.equipment = equipmentJson.clone();
+            d.riftEquipment = riftEquipmentJson.clone();
             d.lastSpeed = lastSpeed; d.lastRiftDamage = lastRiftDamage; d.lastDefense = lastDefense;
             d.speedScale = speedScale; d.speedCalibrated = speedCalibrated;
             d.collections = new ArrayList<>(collections);

@@ -41,7 +41,8 @@ Extras for Hypixel SkyBlock:
   title in the header, accent colored line, thin separators). The vanilla sidebar is hidden while it is shown.
   - Lines are sorted into elements (date & lobby code, SkyBlock date, time, area, purse/piggy, bits, other currencies,
     objective, slayer quest, events, other lines, footer) plus extras: real time, the Minion Time Warp cooldown, **ping**
-    and **server TPS** (the TPS is an estimate from the corrections of the world time that the server sends).
+    and **server TPS**. The ping is measured with the vanilla ping packets (the tab list shows a fixed 1 ms on Hypixel);
+    the TPS is an estimate from the corrections of the world time that the server sends.
     Under `Lines & order` every element can be switched on/off and moved up/down, and separators can be added or removed.
   - Numbers of currency lines can be shown as on Hypixel, short (1.2M) or long (1,234,567).
   - Custom title and custom footer with `&` color codes, accent color, text shadow, text and title alignment, line
@@ -87,8 +88,11 @@ Extras for Hypixel SkyBlock:
     are shown on it. Cooldown reductions (e.g. from your class) are not known to the mod, so the timer can run longer
     than the real cooldown. Only abilities that cost mana show their name in the action bar, so only those are timed.
     Switch it off with "Ability cooldown timers".
-  - The **equipment** is saved in the config when you open `/stats`, so it is still there after a restart (the
-    saved items are read again once you are in a world).
+  - The **equipment** is read when the "Your Equipment and Stats" menu (`/stats`) or the loadouts menu (`/loadouts`) is
+    open. There are **two sets**: the equipment you wear in the Rift and the one outside of it. Each is remembered
+    separately (the set that matches where you are when you open the menu) and the HUD and the inventory screen show
+    the set for where you are. Both are saved in the config, so they are still there after a restart (the saved items
+    are read again once you are in a world).
   - Settings: `/rke inventory`, position and size: `/rke inventory hud`.
 - **Music HUD:** a fifth HUD in the same style, modeled after the SpotifyOverlay mod. It shows what is playing: cover,
   title (long titles scroll), artist, a progress bar with the times, and below it the **synced lyrics** that scroll
@@ -100,6 +104,9 @@ Extras for Hypixel SkyBlock:
   - Windows: a small helper program (`RiftKingMusicHelper.exe`, built from `MusicHelper/` and packed into the jar)
     reads the media session. It uses the **.NET 8 Runtime (x64)**, which must be installed on the PC (the plain runtime is
     enough, not the SDK or the Desktop runtime). Linux: install `playerctl`. macOS is not supported.
+  - Pause, next and previous song work without Premium: with the keys below, with the buttons in `/rke music`, and with the
+    small player at the bottom of the inventory screen (E). (They use the media controls of the system; Spotify itself
+    may limit skipping on a free account.)
   - Keys (all changeable under Options > Controls): Right = next song, Left = previous, Down = restart the song,
     Up = play/pause, Page Up / Page Down = volume of the Spotify app (the volume shows in the header for a moment).
   - The profanity filter replaces strong swear words in the lyrics with stars (option, on by default).
@@ -108,11 +115,13 @@ Extras for Hypixel SkyBlock:
 - **Inventory screen (key E):** all features of the RiftKingInv mod, in the style of the HUDs. The normal inventory is
   replaced by a dark rounded panel with the RiftKingExtras header: armor on the left, the four **equipment** items
   (necklace, cloak, belt, gloves) on the right, your character in the middle, the inventory and hotbar below. Every slot
-  has a **1 pixel frame in the rarity color** of its item (gray for an item without rarity, dark gray for an empty slot).
-  Two columns of **menu buttons** sit at the sides; left click and right click open different SkyBlock menus (hover for
-  the command): collection / recipes, quests / chapters, skills / levels, guides, craft, storage / sacks, pets /
-  loadouts, warps / is. A click on an equipment slot runs `/stats`. Switch it off with "Inventory screen (E)" under
-  `/rke inventory`. **Remove the RiftKingInv jar**, both mods would replace the inventory.
+  has a **1 pixel frame and a light background in the rarity color** of its item (gray frame for an item without
+  rarity, dark gray for an empty slot). Two columns of dark gray-purple **menu buttons** sit at the sides, exactly as
+  tall as the armor and equipment slots; left click and right click open different SkyBlock menus (hover for the
+  command): COL = collection / recipes, QST = quests / chapters, SKL = skills / levels, GDE = guides, CFT = craft,
+  STO = storage / sacks, PET = pets / loadouts, WRP = warps / is. A click on an equipment slot runs `/stats`.
+  At the bottom is a small **music player** (song, previous, play/pause, next). Switch the screen off with
+  "Inventory screen (E)" under `/rke inventory`. **Remove the RiftKingInv jar**, both mods would replace the inventory.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -148,7 +157,7 @@ For any other collection, list the items in `itemNames` of that collection in `c
 /rke music status    what the music HUD currently reads
 /rke inventory       inventory HUD settings
 /rke inventory hud   move and resize the inventory HUD
-/rke stats           show what the inventory HUD read (health, mana, rift time, speed, items, hooks)
+/rke stats           show what the inventory HUD read (health, mana, rift time, speed, items, hooks, ability timers, ping)
 /rke scoreboard      scoreboard settings
 /rke scoreboard dump  show the sidebar lines the mod reads and how it sorts them (for debugging)
 /rke scoreboard status  show how the vanilla sidebar was hooked
@@ -190,6 +199,7 @@ The places most likely to need a fix:
 - `EquipmentStore`: `ItemStack.CODEC`, `RegistryOps.create(JsonOps.INSTANCE, ...)`, `mc.level.registryAccess()`
 - `NetStats`: `mc.level.getGameTime()`, `ClientPacketListener.getPlayerInfo(UUID)`, `PlayerInfo.getLatency()`
 - `AbilityCooldowns`: `DataComponents.LORE` / `ItemLore.lines()`
+- `NetStats` / `mixin/ClientPacketListenerMixin`: the ping packets are found by reflection, the mixin (`handlePongResponse`) is optional (`require = 0`); without an answer the ping shows "-" (`/rke stats` explains)
 - `StatsTracker`: `mc.getConnection().getOnlinePlayers()`, `PlayerInfo.getTabListDisplayName()`
 - `MusicArt`: `NativeImage.read(...)`, `DynamicTexture`, `TextureManager.register(...)`, `RenderPipelines.GUI_TEXTURED` (copied from the SpotifyOverlay code, which runs on 26.1)
 - `MusicKeybinds`: `InputConstants.KEY_RIGHT/LEFT/UP/DOWN/PAGEUP/PAGEDOWN`
