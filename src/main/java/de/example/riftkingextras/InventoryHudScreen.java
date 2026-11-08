@@ -38,6 +38,7 @@ public class InventoryHudScreen extends Screen {
         toggle(right, y, w, "Rarity frames (HUD)", () -> RkeConfig.rarityBorders, v -> RkeConfig.rarityBorders = v);
         toggle(right, y + step, w, "Ability cooldown timers", () -> RkeConfig.abilityTimers, v -> RkeConfig.abilityTimers = v);
         toggle(right, y + step * 2, w, "Inventory screen (E)", () -> RkeConfig.customInventory, v -> RkeConfig.customInventory = v);
+        toggle(right, y + step * 3, w, "Menus (SkyBlock menu...)", () -> RkeConfig.customMenus, v -> RkeConfig.customMenus = v);
 
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());

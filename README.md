@@ -122,6 +122,16 @@ Extras for Hypixel SkyBlock:
   STO = storage / sacks, PET = pets / loadouts, WRP = warps / is. A click on an equipment slot runs `/stats`.
   At the bottom is a small **music player** (song, previous, play/pause, next). Switch the screen off with
   "Inventory screen (E)" under `/rke inventory`. **Remove the RiftKingInv jar**, both mods would replace the inventory.
+- **All menus in the same style:** every chest-style menu (SkyBlock Menu, Skills, Sacks, Storage, Auction House, ...)
+  looks like the inventory screen: dark rounded panel, the menu title in the header, a frame and a light background in
+  the rarity color around the slots. The gray glass panes that fill the empty spaces of SkyBlock menus are hidden.
+  The slots stay where they are, clicking works as before. Switch it off with "Menus (SkyBlock menu...)" under
+  `/rke inventory`.
+- **Social XP HUD:** the coop's Social XP (from Elite, the leaderboard `social`), your rank, the **XP gained since the
+  game started** (green) and the **time played since the game started**, plus the XP per hour of that time. Between two
+  Elite updates (every 5 minutes) the XP you see in the action bar (`+3.5 Social`) is added at once; whatever Elite has
+  more than the mod counted, e.g. XP of your coop members, is added to the gain. Settings in the main settings screen
+  ("Social XP HUD", "Move Social XP HUD").
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -194,6 +204,8 @@ The places most likely to need a fix:
 - `MushroomBreaker`: `mc.hitResult`, `mc.gameMode.startDestroyBlock(...)`, `swing(...)`
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
 - `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `Player.inventoryMenu`; the selected hotbar slot is found by reflection
+- `RiftContainerScreen` / the menu takeover: `ContainerScreen`, `ChestMenu.getRowCount()`; the screen is swapped at the next tick like the inventory screen
+- `SocialHud`: `ManagementFactory...getStartTime()` (wrapped, falls back to the first use)
 - `mixin/SlotAccessor`, `mixin/AbstractContainerScreenAccessor`, `RiftInventoryScreen`: taken over from RiftKingInv, which builds on 26.2 (item drawing, `fill`, `text(Component)`, tooltips and the character preview are verified by it)
 - `ItemRarity`: `DataComponents.LORE` / `ItemLore.lines()`
 - `EquipmentStore`: `ItemStack.CODEC`, `RegistryOps.create(JsonOps.INSTANCE, ...)`, `mc.level.registryAccess()`

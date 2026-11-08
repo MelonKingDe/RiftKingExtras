@@ -1,6 +1,7 @@
 package de.example.riftkingextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import de.example.riftkingextras.mixin.AbstractContainerScreenAccessor;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
@@ -13,7 +14,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -32,6 +35,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         ScoreboardConfig.load();
         StatsTracker.init();
         MusicConfig.load();
+        SocialXp.init();
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(MOD_ID, "tracker"),
@@ -62,6 +66,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                         || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL") || n.equals("OVERLAY_MESSAGE"),
                 InventoryHud::hidesStatusBars));
 
+        // Social XP HUD
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(MOD_ID, "social"),
+                (graphics, tracker) -> SocialHud.render(graphics));
+
         // Fifth HUD: music (now playing + synced lyrics)
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(MOD_ID, "music"),
@@ -89,6 +98,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
             NetStats.tick(client);
+            // chest menus (SkyBlock Menu, Skills, Sacks ...) get the same style as the inventory screen
+            if (RkeConfig.customMenus && client.player != null && client.gui.screen() instanceof ContainerScreen chest
+                    && ((AbstractContainerScreenAccessor) chest).riftkingextras$getMenu() instanceof ChestMenu menu) {
+                client.gui.setScreen(new RiftContainerScreen(menu, client.player.getInventory(), chest.getTitle()));
+            }
             // the inventory screen (E) becomes the RiftKingExtras one
             if (RkeConfig.customInventory && client.player != null
                     && client.gui.screen() instanceof InventoryScreen) {

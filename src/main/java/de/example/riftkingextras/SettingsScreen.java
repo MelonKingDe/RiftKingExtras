@@ -72,6 +72,17 @@ public class SettingsScreen extends Screen {
                 btn -> this.minecraft.gui.setScreen(new InventoryHudScreen(this)))
                 .bounds(right, y + 96, w, 20).build());
 
+        this.addRenderableWidget(Button.builder(
+                Component.literal("Social XP HUD: " + (RkeConfig.showSocial ? "ON" : "OFF")), btn -> {
+                    RkeConfig.showSocial = !RkeConfig.showSocial;
+                    RkeConfig.save();
+                    this.minecraft.gui.setScreen(new SettingsScreen(this.parent));
+                }).bounds(right, y + 120, w, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("Move Social XP HUD"),
+                btn -> this.minecraft.gui.setScreen(new HudEditScreen(this, HudKind.SOCIAL)))
+                .bounds(right, y + 144, w, 20).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
     }

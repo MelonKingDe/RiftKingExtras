@@ -79,6 +79,7 @@ final class StatsTracker {
     /** Called with the cleaned text of every new action bar. */
     static void onActionBar(String plain) {
         AbilityCooldowns.onActionBar(plain); // an ability use starts its cooldown timer
+        SocialXp.onActionBar(plain);         // "+3.5 Social (...)" adds Social XP
         long now = System.currentTimeMillis();
         lastActionBarMs = now;
         lastActionBar = plain;

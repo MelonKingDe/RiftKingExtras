@@ -51,6 +51,7 @@ public final class CollectionApi {
         if (!syncOwn(uuid)) {
             lastAttempt = now - INTERVAL_MS + RETRY_MS; // retry sooner after an error
         }
+        SocialXp.sync(uuid);
         TrackedPlayers.syncAll();
     }
 
