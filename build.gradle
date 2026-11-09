@@ -52,11 +52,6 @@ tasks.register("buildMusicHelper", Exec) {
     onlyIf { dotnetAvailable }
 }
 
-// Jar file name without version: build/libs/NameTagMod.jar
-tasks.withType(Jar).configureEach {
-    archiveVersion = ''
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.release = 25
 }

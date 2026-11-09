@@ -127,7 +127,7 @@ Extras for Hypixel SkyBlock:
   the rarity color around the slots. The gray glass panes that fill the empty spaces of SkyBlock menus are hidden.
   The slots stay where they are, clicking works as before. Switch it off with "Menus (SkyBlock menu...)" under
   `/rke inventory`.
-- **Social XP HUD:** the coop's Social XP (from Elite, the leaderboard `social`), your rank, the **XP gained since the
+- **Social XP HUD:** the coop's Social XP (from Elite, the leaderboard `coop-social`, not the solo `social` one), your rank, the **XP gained since the
   game started** (green) and the **time played since the game started**, plus the XP per hour of that time. Between two
   Elite updates (every 5 minutes) the XP you see in the action bar (`+3.5 Social`) is added at once; whatever Elite has
   more than the mod counted, e.g. XP of your coop members, is added to the gain. Settings in the main settings screen
@@ -189,13 +189,18 @@ sharing the mod with others.
 ## Building (GitHub)
 1. Create a new GitHub repository and upload the contents of this folder (keep `.github/` and `MusicHelper/`).
 2. Open the **Actions** tab, wait for the `build` run, then download the artifact **RiftKingExtras-jar**.
-3. Put `RiftKingExtras.jar` into your `mods` folder (needs Fabric Loader + Fabric API for 26.2, Java 25).
+3. Put `RiftKingExtras-<version>.jar` (e.g. `RiftKingExtras-1.0.0.jar`) into your `mods` folder (needs Fabric Loader + Fabric API for 26.2, Java 25).
 
 The workflow installs the .NET 8 SDK and builds the Windows music helper into the jar. The helper does not bring its own
 runtime, so it stays small; it needs the .NET 8 Runtime on the PC where you play. If a local build has no `dotnet`, the
 mod still builds, but the music HUD then only works on Linux.
 
-Local build: `gradle wrapper && ./gradlew build` (JDK 25) -> `build/libs/RiftKingExtras.jar` (not the `-sources.jar`).
+Local build: `gradle wrapper && ./gradlew build` (JDK 25) -> `build/libs/RiftKingExtras-<version>.jar` (not the `-sources.jar`).
+
+## Version
+The version is `mod_version` in `gradle.properties` (now **1.0.0**). It is part of the jar name, shown in the top right
+of the settings screen (`/rke`), in the mod list, and printed by `/rke version`. To release a new version, change that
+number (e.g. `1.1.0`) and build again.
 
 ## If the build fails on API names
 The project was written against the API names of the working NameTagMod, but it could not be compiled here.

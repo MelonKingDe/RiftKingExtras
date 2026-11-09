@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The coop's Social XP. The total and the rank come from Elite (every 5 minutes, leaderboard "social"). Between two
+ * The coop's Social XP. The total and the rank come from Elite (every 5 minutes, leaderboard "coop-social"). Between two
  * updates the mod adds the XP you see in the action bar ("+3.5 Social (...)"). Whatever Elite has more than the mod
  * counted (e.g. XP of your coop members) is added to the gain of this session.
  * It reuses the logic of a tracked collection (total, gain, correction after an Elite update).
@@ -46,7 +46,7 @@ final class SocialXp {
     /** Asks Elite for the Social XP and rank of the player (background thread). */
     static void sync(UUID uuid) {
         try {
-            EliteLookup.Result r = EliteLookup.lookup(uuid, "social", s -> {});
+            EliteLookup.Result r = EliteLookup.lookup(uuid, "coop-social", s -> {});
             if (r.found()) DATA.applyApi(r.amount() >= 0 ? Math.round(r.amount()) : -1, r.rank());
         } catch (Exception ignored) {
             // the next update tries again

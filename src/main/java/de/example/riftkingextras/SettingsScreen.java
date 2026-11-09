@@ -91,6 +91,8 @@ public class SettingsScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         Logo.draw(graphics, this.width / 2, 1, 42);
+        String version = "v" + RiftKingExtrasClient.version();
+        graphics.text(this.font, version, this.width - 6 - this.font.width(version), 6, 0xFF9AA0A6, true);
     }
 
     @Override

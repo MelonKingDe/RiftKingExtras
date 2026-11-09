@@ -28,7 +28,7 @@ public class RiftInventoryScreen extends AbstractContainerScreen<InventoryMenu> 
     private static final int ARMOR_X = 36, ARMOR_Y = 19;             // item position, the slot box is 1 pixel larger
     private static final int EQUIP_X = W - 36 - 16, EQUIP_Y = 19;
     private static final int GRID_X = 10, GRID_Y = 95, HOTBAR_Y = 153;
-    private static final int BANNER_W = 24, BTN = 16, BTN_STEP = 18;
+    private static final int BANNER_W = 24, BTN = 14, BTN_STEP = 18;
     private static final int BANNER_Y = ARMOR_Y - 1;                 // same top as the armor and equipment slot boxes
     private static final int BANNER_H = 4 * 18;                      // and the same height (4 slot boxes)
     private static final int LEFT_BANNER_X = 6, RIGHT_BANNER_X = W - 6 - BANNER_W;
@@ -88,7 +88,7 @@ public class RiftInventoryScreen extends AbstractContainerScreen<InventoryMenu> 
     }
 
     private static Btn btn(int bannerX, int index, String label, String left, String right) {
-        // 4 buttons of 16 pixels with 2 pixels around them fill the 72 pixels of the banner exactly
+        // 4 buttons of 14 pixels with 4 pixels between them: 2 pixels above the first and 2 below the last one
         return new Btn(bannerX + (BANNER_W - BTN) / 2, BANNER_Y + 2 + index * BTN_STEP, label, left, right);
     }
 
@@ -123,7 +123,7 @@ public class RiftInventoryScreen extends AbstractContainerScreen<InventoryMenu> 
         drawBanner(g, l + LEFT_BANNER_X, t + BANNER_Y);
         drawBanner(g, l + RIGHT_BANNER_X, t + BANNER_Y);
         for (Btn b : buttons) {
-            drawButton(g, l + b.x(), t + b.y(), BTN, BTN, b.label(), hit(mouseX, mouseY, l + b.x(), t + b.y(), BTN, BTN));
+            drawIconButton(g, l + b.x(), t + b.y(), b.label(), hit(mouseX, mouseY, l + b.x(), t + b.y(), BTN, BTN));
         }
 
         // your character
@@ -208,6 +208,14 @@ public class RiftInventoryScreen extends AbstractContainerScreen<InventoryMenu> 
     private static void drawBanner(GuiGraphicsExtractor g, int x, int y) {
         TrackerHud.rrect(g, x, y, x + BANNER_W, y + BANNER_H, TrackerHud.withAlpha(ACCENT, 0x24));
         TrackerHud.border(g, x, y, x + BANNER_W, y + BANNER_H, TrackerHud.withAlpha(ACCENT, 0x70));
+    }
+
+    /** A dark gray-purple button with a pixel icon that shows what it does. */
+    private void drawIconButton(GuiGraphicsExtractor g, int x, int y, String icon, boolean hover) {
+        TrackerHud.rrect(g, x, y, x + BTN, y + BTN, hover ? BTN_BG_HOVER : BTN_BG);
+        TrackerHud.border(g, x, y, x + BTN, y + BTN, hover ? ACCENT : BTN_BORDER);
+        ButtonIcons.draw(g, icon, x + (BTN - ButtonIcons.SIZE) / 2, y + (BTN - ButtonIcons.SIZE) / 2,
+                hover ? 0xFFFFFFFF : 0xFFC9B4F0);
     }
 
     /** A custom dark gray-purple button with a short label. */

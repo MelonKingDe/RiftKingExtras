@@ -3,6 +3,7 @@ package de.example.riftkingextras;
 import com.mojang.blaze3d.platform.InputConstants;
 import de.example.riftkingextras.mixin.AbstractContainerScreenAccessor;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -28,6 +29,12 @@ import java.util.function.Function;
 
 public class RiftKingExtrasClient implements ClientModInitializer {
     public static final String MOD_ID = "riftkingextras";
+
+    /** The version from gradle.properties (mod_version), e.g. "1.0.0". */
+    public static String version() {
+        return FabricLoader.getInstance().getModContainer(MOD_ID)
+                .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
+    }
 
     @Override
     public void onInitializeClient() {
@@ -181,6 +188,10 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(ClientCommands.literal("rke")
                         .executes(ctx -> openScreen(SettingsScreen::new))
+                        .then(ClientCommands.literal("version").executes(ctx -> {
+                            ctx.getSource().sendFeedback(Component.literal("RiftKingExtras " + version()));
+                            return 1;
+                        }))
                         .then(ClientCommands.literal("hud")
                                 .executes(ctx -> openScreen(p -> new HudEditScreen(p, HudKind.TRACKER))))
                         .then(ClientCommands.literal("collections")
