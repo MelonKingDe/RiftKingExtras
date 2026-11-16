@@ -35,14 +35,39 @@ public final class MusicHud {
 
     // ---------- size ----------
 
+    /** The lyrics field is shown while lyrics load or exist; it is hidden if none were found. */
+    private static boolean lyricsVisible() {
+        if (!MusicConfig.showLyrics) return false;
+        if (!MusicState.get().active()) return true; // the sample in the HUD editor
+        LyricsService.Status status = LyricsService.status();
+        return status == LyricsService.Status.LOADING || status == LyricsService.Status.READY;
+    }
+
     private static int lyricsPanelHeight() {
-        return MusicConfig.showLyrics ? MusicConfig.lyricLines * PITCH + 6 : 0;
+        return lyricsVisible() ? MusicConfig.lyricLines * PITCH + 6 : 0;
+    }
+
+    // the accent color moves smoothly to the cover color of a new song
+    private static float accentR, accentG, accentB;
+    private static long lastAccentNanos = 0;
+
+    private static int accentColor() {
+        int target = MusicConfig.accentFromCover && MusicArt.ready() && MusicState.get().active()
+                ? MusicArt.accent() : MusicConfig.accentArgb();
+        long now = System.nanoTime();
+        float dt = lastAccentNanos == 0 ? 0 : Math.min(0.25f, (now - lastAccentNanos) / 1_000_000_000f);
+        lastAccentNanos = now;
+        float k = dt == 0 ? 1f : (float) (1 - Math.exp(-dt * 6));
+        accentR += (((target >> 16) & 255) / 255f - accentR) * k;
+        accentG += (((target >> 8) & 255) / 255f - accentG) * k;
+        accentB += ((target & 255) / 255f - accentB) * k;
+        return 0xFF000000 | (Math.round(accentR * 255) << 16) | (Math.round(accentG * 255) << 8) | Math.round(accentB * 255);
     }
 
     static int width() { return W; }
 
     static int height() {
-        return TrackerHud.HEADER_H + CARD_H + (MusicConfig.showLyrics ? GAP + lyricsPanelHeight() : 0) + 4;
+        return TrackerHud.HEADER_H + CARD_H + (lyricsVisible() ? GAP + lyricsPanelHeight() : 0) + 4;
     }
 
     static int scaledWidth() { return (int) Math.ceil(width() * MusicConfig.scale); }
@@ -120,7 +145,7 @@ public final class MusicHud {
 
     private static void drawContent(GuiGraphicsExtractor g, MusicState.Snapshot s, boolean demo) {
         Font font = Minecraft.getInstance().font;
-        int accent = MusicConfig.accentArgb();
+        int accent = accentColor();
         long now = System.currentTimeMillis();
         int w = W, h = height();
 
@@ -180,7 +205,7 @@ public final class MusicHud {
         TrackerHud.right(g, font, mmss(s.durationMs()), textRight, cy + 38, TrackerHud.MUTED);
 
         // lyrics
-        if (MusicConfig.showLyrics) {
+        if (lyricsVisible()) {
             int ly = cy + CARD_H + GAP;
             int panelH = lyricsPanelHeight();
             TrackerHud.rrect(g, cx, ly, cx2, ly + panelH, 0x14FFFFFF);

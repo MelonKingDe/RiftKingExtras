@@ -40,6 +40,7 @@ public final class RkeConfig {
     public static volatile long socialTotal = -1;
     public static volatile int socialRank = 0;
 
+    public static volatile boolean storageOverlay = true; // the storage overlay (all pages, search)
     public static volatile boolean customMenus = true; // chest menus (SkyBlock menu, sacks, skills ...) in the RiftKingExtras style
     public static volatile boolean customInventory = true; // the inventory screen (E) in the RiftKingExtras style
     public static volatile boolean abilityTimers = true; // cooldown timers on hotbar items with an ability
@@ -89,7 +90,7 @@ public final class RkeConfig {
         boolean speedCalibrated = false;
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
-        boolean abilityTimers = true, customInventory = true, customMenus = true;
+        boolean abilityTimers = true, customInventory = true, customMenus = true, storageOverlay = true;
         int socX = -1, socY = 150, socialRank = 0;
         float socScale = 1.0f;
         boolean showSocial = true;
@@ -120,7 +121,7 @@ public final class RkeConfig {
                     if (d.timewarpMessage != null && !d.timewarpMessage.isBlank()) timewarpMessage = d.timewarpMessage;
                     invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
-                    abilityTimers = d.abilityTimers; customInventory = d.customInventory; customMenus = d.customMenus;
+                    abilityTimers = d.abilityTimers; customInventory = d.customInventory; customMenus = d.customMenus; storageOverlay = d.storageOverlay;
                     socX = d.socX; socY = d.socY; showSocial = d.showSocial; socialTotal = d.socialTotal; socialRank = d.socialRank;
                     if (d.socScale >= 0.25f && d.socScale <= 2.0f) socScale = d.socScale;
                     if (d.equipment != null && d.equipment.length == 4) {
@@ -177,7 +178,7 @@ public final class RkeConfig {
             d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
-            d.abilityTimers = abilityTimers; d.customInventory = customInventory; d.customMenus = customMenus;
+            d.abilityTimers = abilityTimers; d.customInventory = customInventory; d.customMenus = customMenus; d.storageOverlay = storageOverlay;
             socialTotal = SocialXp.DATA.total();
             socialRank = SocialXp.DATA.rank;
             d.socX = socX; d.socY = socY; d.socScale = socScale; d.showSocial = showSocial;

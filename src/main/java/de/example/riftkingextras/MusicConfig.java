@@ -13,6 +13,7 @@ public final class MusicConfig {
     public static volatile boolean showLyrics = true;
     public static volatile boolean showArt = true;
     public static volatile boolean profanityFilter = true;
+    public static volatile boolean accentFromCover = true; // the HUD takes the main color of the cover
     public static volatile int lyricLines = 5;       // 3, 5 or 7 lines
     public static volatile int lyricOffsetMs = 0;    // positive = the lyrics show up earlier
     public static volatile String accent = "#1DB954";
@@ -25,7 +26,7 @@ public final class MusicConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static class Data {
-        boolean enabled = true, showLyrics = true, showArt = true, profanityFilter = true;
+        boolean enabled = true, showLyrics = true, showArt = true, profanityFilter = true, accentFromCover = true;
         int lyricLines = 5, lyricOffsetMs = 0;
         String accent = "#1DB954";
         int x = -1, y = 8;
@@ -39,7 +40,7 @@ public final class MusicConfig {
             if (!Files.exists(FILE)) return;
             Data d = GSON.fromJson(Files.readString(FILE), Data.class);
             if (d == null) return;
-            enabled = d.enabled; showLyrics = d.showLyrics; showArt = d.showArt; profanityFilter = d.profanityFilter;
+            enabled = d.enabled; showLyrics = d.showLyrics; showArt = d.showArt; profanityFilter = d.profanityFilter; accentFromCover = d.accentFromCover;
             lyricLines = (d.lyricLines == 3 || d.lyricLines == 7) ? d.lyricLines : 5;
             lyricOffsetMs = Math.max(-5000, Math.min(5000, d.lyricOffsetMs));
             if (d.accent != null) accent = d.accent;
@@ -52,6 +53,7 @@ public final class MusicConfig {
         try {
             Data d = new Data();
             d.enabled = enabled; d.showLyrics = showLyrics; d.showArt = showArt; d.profanityFilter = profanityFilter;
+            d.accentFromCover = accentFromCover;
             d.lyricLines = lyricLines; d.lyricOffsetMs = lyricOffsetMs; d.accent = accent;
             d.x = x; d.y = y; d.scale = scale;
             Files.writeString(FILE, GSON.toJson(d));

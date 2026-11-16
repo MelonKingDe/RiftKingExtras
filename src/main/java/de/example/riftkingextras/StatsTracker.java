@@ -31,6 +31,8 @@ final class StatsTracker {
     static volatile int riftSeconds = -1;
     static volatile int riftMax = 0;
     static volatile long speed = -1, riftDamage = -1, defense = -1;
+    /** The SkyBlock profile ("Profile: Banana" in the tab list); storage pages are saved per profile. */
+    static volatile String profileName = "default";
     static volatile String speedSource = "none yet";
     static volatile boolean speedLive = false;      // seen in the tab list this session (otherwise: last known value)
     static volatile boolean riftDamageLive = false;
@@ -40,6 +42,7 @@ final class StatsTracker {
     static volatile String lastActionBar = "";
     private static int ticks = 0;
 
+    private static final Pattern PROFILE = Pattern.compile("^\\W*Profile:\\s*([\\p{L}]+)", Pattern.CASE_INSENSITIVE);
     private static final String NUM = "(\\d[\\d,]*)";
     // every "123/456" in the action bar; what it is (health or mana) is decided by the symbol or word next to it
     private static final Pattern PAIR = Pattern.compile(NUM + "\\s*/\\s*" + NUM);
@@ -149,6 +152,8 @@ final class StatsTracker {
         if (++ticks % 20 != 0) return;
         boolean tabSpeed = false;
         for (String line : tabLines(mc)) {
+            Matcher profile = PROFILE.matcher(line);
+            if (profile.find()) profileName = profile.group(1);
             Matcher m = SPEED.matcher(line);
             if (m.find()) {
                 speed = num(m.group(1));

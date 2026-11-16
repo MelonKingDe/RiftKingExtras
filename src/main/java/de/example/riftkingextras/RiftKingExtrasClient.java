@@ -105,6 +105,13 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
             NetStats.tick(client);
+            // storage: remember the pages you open, and show the overview instead of the "Storage" menu
+            StorageCache.tick(client);
+            if (RkeConfig.storageOverlay && client.player != null && client.gui.screen() instanceof ContainerScreen storage
+                    && ((AbstractContainerScreenAccessor) storage).riftkingextras$getMenu() instanceof ChestMenu storageMenu
+                    && StorageTitles.isOverview(ScoreboardModel.plain(storage.getTitle()))) {
+                client.gui.setScreen(new StorageOverviewScreen(storageMenu));
+            }
             // chest menus (SkyBlock Menu, Skills, Sacks ...) get the same style as the inventory screen
             if (RkeConfig.customMenus && client.player != null && client.gui.screen() instanceof ContainerScreen chest
                     && ((AbstractContainerScreenAccessor) chest).riftkingextras$getMenu() instanceof ChestMenu menu) {
@@ -256,6 +263,8 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                             + MusicArt.info()));
                                     return 1;
                                 })))
+                        .then(ClientCommands.literal("storage")
+                                .executes(ctx -> openScreen(p -> new StorageOverviewScreen(null))))
                         .then(ClientCommands.literal("inventory")
                                 .executes(ctx -> openScreen(InventoryHudScreen::new))
                                 .then(ClientCommands.literal("hud")

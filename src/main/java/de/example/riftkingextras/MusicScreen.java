@@ -35,6 +35,7 @@ public class MusicScreen extends Screen {
         toggle(left, y + step, w, "Lyrics", () -> MusicConfig.showLyrics, v -> MusicConfig.showLyrics = v);
         toggle(left, y + step * 2, w, "Cover art", () -> MusicConfig.showArt, v -> MusicConfig.showArt = v);
         toggle(left, y + step * 3, w, "Profanity filter", () -> MusicConfig.profanityFilter, v -> MusicConfig.profanityFilter = v);
+        toggle(left, y + step * 4, w, "Cover color", () -> MusicConfig.accentFromCover, v -> MusicConfig.accentFromCover = v);
 
         // lyric lines: 3, 5 or 7
         int lineIndex = 1;
