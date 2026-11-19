@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.inventory.ChestMenu;
@@ -105,12 +106,14 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             StatsTracker.tick(client);
             ActionBarReader.tick(client);
             NetStats.tick(client);
-            // storage: remember the pages you open, and show the overview instead of the "Storage" menu
+            // storage: remember the pages you open; the "Storage" menu and every page open as the storage overlay
             StorageCache.tick(client);
             if (RkeConfig.storageOverlay && client.player != null && client.gui.screen() instanceof ContainerScreen storage
-                    && ((AbstractContainerScreenAccessor) storage).riftkingextras$getMenu() instanceof ChestMenu storageMenu
-                    && StorageTitles.isOverview(ScoreboardModel.plain(storage.getTitle()))) {
-                client.gui.setScreen(new StorageOverviewScreen(storageMenu));
+                    && ((AbstractContainerScreenAccessor) storage).riftkingextras$getMenu() instanceof ChestMenu storageMenu) {
+                String storageTitle = ScoreboardModel.plain(storage.getTitle());
+                if (StorageTitles.isOverview(storageTitle) || StorageTitles.parse(storageTitle) != null) {
+                    client.gui.setScreen(new StorageScreen(storageMenu, client.player.getInventory(), storage.getTitle()));
+                }
             }
             // chest menus (SkyBlock Menu, Skills, Sacks ...) get the same style as the inventory screen
             if (RkeConfig.customMenus && client.player != null && client.gui.screen() instanceof ContainerScreen chest
@@ -264,7 +267,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                     return 1;
                                 })))
                         .then(ClientCommands.literal("storage")
-                                .executes(ctx -> openScreen(p -> new StorageOverviewScreen(null))))
+                                .executes(ctx -> openScreen(p -> {
+                                    LocalPlayer me = Minecraft.getInstance().player;
+                                    return me == null ? null
+                                            : new StorageScreen(me.inventoryMenu, me.getInventory(), Component.literal("Storage"));
+                                })))
                         .then(ClientCommands.literal("inventory")
                                 .executes(ctx -> openScreen(InventoryHudScreen::new))
                                 .then(ClientCommands.literal("hud")

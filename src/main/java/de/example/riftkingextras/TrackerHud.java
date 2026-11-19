@@ -116,7 +116,7 @@ public final class TrackerHud {
 
     static void render(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        if (mc.player == null || !RkeConfig.showTracker) return;
         if (mc.gui.screen() instanceof HudEditScreen e && e.kind() == HudKind.TRACKER) return; // preview is shown instead
         int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();

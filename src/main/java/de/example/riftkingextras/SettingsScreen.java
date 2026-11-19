@@ -49,6 +49,13 @@ public class SettingsScreen extends Screen {
                 btn -> this.minecraft.gui.setScreen(new MusicScreen(this)))
                 .bounds(left, y + 120, w, 20).build());
 
+        this.addRenderableWidget(Button.builder(
+                Component.literal("Tracker HUD: " + (RkeConfig.showTracker ? "ON" : "OFF")), btn -> {
+                    RkeConfig.showTracker = !RkeConfig.showTracker;
+                    RkeConfig.save();
+                    this.minecraft.gui.setScreen(new SettingsScreen(this.parent));
+                }).bounds(left, y + 144, w, 20).build());
+
         // Right column: Timewarp HUD and sync
         this.addRenderableWidget(Button.builder(
                 Component.literal("Timewarp HUD: " + (RkeConfig.showTimewarp ? "ON" : "OFF")), btn -> {

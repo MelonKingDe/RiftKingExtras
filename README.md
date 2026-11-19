@@ -132,15 +132,19 @@ Extras for Hypixel SkyBlock:
   Elite updates (every 5 minutes) the XP you see in the action bar (`+3.5 Social`) is added at once; whatever Elite has
   more than the mod counted, e.g. XP of your coop members, is added to the gain. Settings in the main settings screen
   ("Social XP HUD", "Move Social XP HUD").
-- **Storage overlay:** the SkyBlock storage (`/storage`) as one screen: all **9 ender chest pages** and all **18
-  backpacks** as small inventories in the RiftKingExtras style, with a **search** over everything the mod has seen (name
-  and lore; matches get a purple frame, everything else is dimmed, every page header shows how many were found). Three
-  tabs switch between ender chest, backpacks 1-9 and backpacks 10-18. A click on a page opens it. The mod remembers
-  what a page contained when you opened it the last time (it cannot see pages you never opened; those say "Not opened
-  yet"), saved per SkyBlock profile in `config/riftkingextras/storage/`, so it also works after a restart. `/rke storage`
-  opens the overview anywhere, to look at the saved pages. Inside an open page, a small **page navigator** to the left of
-  the menu opens any other page with one click (dim numbers = never opened) or goes back to the overview. Switch it off with
-  "Storage overlay" under `/rke inventory`.
+- **Storage overlay:** the SkyBlock storage (`/storage`, `/enderchest`, `/backpack`) as one big screen in the style known
+  from NotEnoughUpdates, Skyblocker and similar mods: **all 9 ender chest pages and 18 backpacks are always in view** in
+  a scrollable panel (mouse wheel, scrollbar, or click on the scrollbar track). When you open a page, you do not get the
+  normal storage: the overlay stays and the page you opened is **highlighted** (purple frame), its slots are the real
+  ones, so you use it as usual. A click on another page opens it. The other pages show what they contained when you
+  last opened them (the server only sends a page when you open it, so pages never opened say "Not opened yet"). Under the
+  panel: **shortcut** buttons for every page, a **search** over everything the mod has seen (name and lore; matches get a
+  purple frame, everything else is dimmed, page headers show how many were found, and the view jumps to the first match),
+  and your **inventory** (move items in and out as in the normal storage). Pages are saved per SkyBlock profile in
+  `config/riftkingextras/storage/`, so they are there after a restart. `/rke storage` opens the screen anywhere to look at the
+  saved pages. Switch it off with "Storage overlay" under `/rke inventory`.
+- **Tracker HUD toggle:** "Tracker HUD: ON/OFF" in the main settings screen (`/rke`) hides the whole collection tracker
+  HUD, including the player table. Its settings are kept.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -218,7 +222,7 @@ The places most likely to need a fix:
 - `MushroomBreaker`: `mc.hitResult`, `mc.gameMode.startDestroyBlock(...)`, `swing(...)`
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
 - `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `Player.inventoryMenu`; the selected hotbar slot is found by reflection
-- `StorageOverviewScreen` (plain `Screen` with `EditBox`: `setInitialFocus`, `getValue`), `StorageCache` (`ChestMenu.getRowCount()`, item codec like the equipment)
+- `StorageScreen` (`AbstractContainerScreen`: `mouseScrolled`, `mouseDragged`, `keyPressed(KeyEvent)`, `enableScissor`, `imageWidth/imageHeight`, `Slot.container`/`getContainerSlot()` - these signatures are the ones Skysoft uses on 26.x), `StorageCache` (`ChestMenu.getRowCount()`, item codec like the equipment)
 - `RiftContainerScreen` / the menu takeover: `ContainerScreen`, `ChestMenu.getRowCount()`; the screen is swapped at the next tick like the inventory screen
 - `SocialHud`: `ManagementFactory...getStartTime()` (wrapped, falls back to the first use)
 - `mixin/SlotAccessor`, `mixin/AbstractContainerScreenAccessor`, `RiftInventoryScreen`: taken over from RiftKingInv, which builds on 26.2 (item drawing, `fill`, `text(Component)`, tooltips and the character preview are verified by it)
