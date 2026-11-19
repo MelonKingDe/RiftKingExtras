@@ -222,7 +222,7 @@ The places most likely to need a fix:
 - `MushroomBreaker`: `mc.hitResult`, `mc.gameMode.startDestroyBlock(...)`, `swing(...)`
 - `CollectionTracker.countInInventory`: `getInventory()`, `getHoverName()`
 - `InventoryHud`: `Player.getItemBySlot(EquipmentSlot)`, `Player.inventoryMenu`; the selected hotbar slot is found by reflection
-- `StorageScreen` (`AbstractContainerScreen`: `mouseScrolled`, `mouseDragged`, `keyPressed(KeyEvent)`, `enableScissor`, `imageWidth/imageHeight`, `Slot.container`/`getContainerSlot()` - these signatures are the ones Skysoft uses on 26.x), `StorageCache` (`ChestMenu.getRowCount()`, item codec like the equipment)
+- `StorageScreen` (`AbstractContainerScreen`: `mouseScrolled`, `mouseDragged`, `keyPressed(KeyEvent)`, `enableScissor`, `Slot.container`/`getContainerSlot()` - these signatures are the ones Skysoft uses on 26.x), `StorageCache` (`ChestMenu.getRowCount()`, item codec like the equipment)
 - `RiftContainerScreen` / the menu takeover: `ContainerScreen`, `ChestMenu.getRowCount()`; the screen is swapped at the next tick like the inventory screen
 - `SocialHud`: `ManagementFactory...getStartTime()` (wrapped, falls back to the first use)
 - `mixin/SlotAccessor`, `mixin/AbstractContainerScreenAccessor`, `RiftInventoryScreen`: taken over from RiftKingInv, which builds on 26.2 (item drawing, `fill`, `text(Component)`, tooltips and the character preview are verified by it)

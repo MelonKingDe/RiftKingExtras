@@ -51,7 +51,8 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
     private ItemStack hoverStack = null;
 
     public StorageScreen(AbstractContainerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 166);
+        // a huge size: nothing on the screen counts as "outside", so a click on an empty spot never drops the carried item
+        super(menu, inventory, title, Short.MAX_VALUE, Short.MAX_VALUE);
         this.chest = menu instanceof ChestMenu c ? c : null;
         this.selected = StorageTitles.parse(ScoreboardModel.plain(title));
         for (int i = 0; i < StorageTitles.ENDER_CHEST_PAGES; i++) keys[i] = "EC" + (i + 1);
@@ -133,8 +134,6 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
         super.init();
         this.leftPos = 0; // the whole screen belongs to this overlay, slot positions are absolute
         this.topPos = 0;
-        this.imageWidth = this.width; // so that a click on an empty spot never drops the item you carry
-        this.imageHeight = this.height;
 
         Layout l = layout();
         searchBox = new EditBox(this.font, l.invX() + 6, l.invY() + 6, INV_W - 12, 16, Component.literal("Search"));
