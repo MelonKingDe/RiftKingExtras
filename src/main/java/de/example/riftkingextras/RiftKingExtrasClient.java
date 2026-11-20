@@ -108,6 +108,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
             NetStats.tick(client);
             // storage: remember the pages you open; the "Storage" menu and every page open as the storage overlay
             StorageCache.tick(client);
+            StorageGuiScale.tick(client);
             if (RkeConfig.storageOverlay && client.player != null && client.gui.screen() instanceof ContainerScreen storage
                     && ((AbstractContainerScreenAccessor) storage).riftkingextras$getMenu() instanceof ChestMenu storageMenu) {
                 String storageTitle = ScoreboardModel.plain(storage.getTitle());
@@ -132,6 +133,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             CollectionTracker.persist();
             MusicManager.stop(); // closes the Windows helper
+            StorageGuiScale.restore(client); // the game's GUI scale must not stay changed
         });
 
         MusicKeybinds.register(category);

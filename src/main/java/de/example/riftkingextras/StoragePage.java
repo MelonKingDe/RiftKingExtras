@@ -34,10 +34,10 @@ final class StoragePage {
         return sb.toString();
     }
 
-    /** How many slots match the search text (lower case). */
+    /** How many slots match the search text (lower case). The first row holds the menu buttons, it is skipped. */
     int matches(String query) {
         int n = 0;
-        for (String s : search) if (!s.isEmpty() && s.contains(query)) n++;
+        for (int i = 9; i < search.length; i++) if (!search[i].isEmpty() && search[i].contains(query)) n++;
         return n;
     }
 }

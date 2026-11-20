@@ -41,6 +41,15 @@ public class InventoryHudScreen extends Screen {
         toggle(right, y + step * 3, w, "Menus (SkyBlock menu...)", () -> RkeConfig.customMenus, v -> RkeConfig.customMenus = v);
         toggle(right, y + step * 4, w, "Storage overlay", () -> RkeConfig.storageOverlay, v -> RkeConfig.storageOverlay = v);
 
+        // GUI size of the storage overlay only: 0 = like the game, 1-4 = a fixed GUI scale (smaller = more pages fit)
+        int scale = RkeConfig.storageGuiScale;
+        this.addRenderableWidget(Button.builder(
+                Component.literal("Storage GUI scale: " + (scale == 0 ? "like game" : String.valueOf(scale))), btn -> {
+                    RkeConfig.storageGuiScale = scale >= 4 ? 0 : scale + 1;
+                    RkeConfig.save();
+                    this.minecraft.gui.setScreen(new InventoryHudScreen(this.parent));
+                }).bounds(right, y + step * 5, w, 20).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
     }

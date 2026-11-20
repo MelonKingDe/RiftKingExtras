@@ -143,6 +143,13 @@ Extras for Hypixel SkyBlock:
   and your **inventory** (move items in and out as in the normal storage). Pages are saved per SkyBlock profile in
   `config/riftkingextras/storage/`, so they are there after a restart. `/rke storage` opens the screen anywhere to look at the
   saved pages. Switch it off with "Storage overlay" under `/rke inventory`.
+  - Every page shows its **45 storage slots**: the first row of the menu (the buttons) is hidden and not searched.
+  - The panel is exactly as wide as the pages and the scrollbar, your inventory is centered at the bottom, the
+    shortcut buttons sit to the left of it.
+  - **Storage GUI scale** (`/rke inventory`): sets a separate GUI size for the storage screen only. While it is open, the
+    GUI scale of the game is switched to the value you chose (e.g. 2 instead of 3: smaller, so more pages fit), and
+    switched back when you leave the storage (also when the game closes). "like game" changes nothing. Note: the scale
+    is the game's own GUI scale, so the whole screen gets smaller, not only the pages.
 - **Tracker HUD toggle:** "Tracker HUD: ON/OFF" in the main settings screen (`/rke`) hides the whole collection tracker
   HUD, including the player table. Its settings are kept.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,

@@ -41,6 +41,7 @@ public final class RkeConfig {
     public static volatile int socialRank = 0;
 
     public static volatile boolean showTracker = true; // the collection tracker HUD (and its player table)
+    public static volatile int storageGuiScale = 0; // GUI scale while the storage overlay is open (0 = as in the game)
     public static volatile boolean storageOverlay = true; // the storage overlay (all pages, search)
     public static volatile boolean customMenus = true; // chest menus (SkyBlock menu, sacks, skills ...) in the RiftKingExtras style
     public static volatile boolean customInventory = true; // the inventory screen (E) in the RiftKingExtras style
@@ -92,7 +93,7 @@ public final class RkeConfig {
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
         boolean abilityTimers = true, customInventory = true, customMenus = true, storageOverlay = true, showTracker = true;
-        int socX = -1, socY = 150, socialRank = 0;
+        int socX = -1, socY = 150, socialRank = 0, storageGuiScale = 0;
         float socScale = 1.0f;
         boolean showSocial = true;
         long socialTotal = -1;
@@ -123,6 +124,7 @@ public final class RkeConfig {
                     invX = d.invX; invY = d.invY; invEnabled = d.invEnabled; invOnlySkyBlock = d.invOnlySkyBlock;
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
                     abilityTimers = d.abilityTimers; customInventory = d.customInventory; customMenus = d.customMenus; storageOverlay = d.storageOverlay; showTracker = d.showTracker;
+                    storageGuiScale = Math.max(0, Math.min(6, d.storageGuiScale));
                     socX = d.socX; socY = d.socY; showSocial = d.showSocial; socialTotal = d.socialTotal; socialRank = d.socialRank;
                     if (d.socScale >= 0.25f && d.socScale <= 2.0f) socScale = d.socScale;
                     if (d.equipment != null && d.equipment.length == 4) {
@@ -179,7 +181,7 @@ public final class RkeConfig {
             d.invX = invX; d.invY = invY; d.invScale = invScale; d.invEnabled = invEnabled;
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
-            d.abilityTimers = abilityTimers; d.customInventory = customInventory; d.customMenus = customMenus; d.storageOverlay = storageOverlay; d.showTracker = showTracker;
+            d.abilityTimers = abilityTimers; d.customInventory = customInventory; d.customMenus = customMenus; d.storageOverlay = storageOverlay; d.showTracker = showTracker; d.storageGuiScale = storageGuiScale;
             socialTotal = SocialXp.DATA.total();
             socialRank = SocialXp.DATA.rank;
             d.socX = socX; d.socY = socY; d.socScale = socScale; d.showSocial = showSocial;

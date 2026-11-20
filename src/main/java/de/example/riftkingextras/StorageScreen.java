@@ -77,25 +77,30 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
                           int cols, int gridX, int invX, int invY, boolean showShortcut, int shortX, int shortY) {}
 
     private Layout layout() {
-        int ux0 = MARGIN, ux1 = this.width - MARGIN, uy0 = MARGIN;
-        int uy1 = Math.max(uy0 + 100, this.height - MARGIN - INV_H - 8);
-        int vx0 = ux0 + 8, vx1 = ux1 - 8 - BAR_W - 4, vy0 = uy0 + 8, vy1 = uy1 - 8;
-        int cols = Math.max(1, Math.min(3, (vx1 - vx0 + TILE_GAP) / (TILE_W + TILE_GAP)));
+        int availW = this.width - 2 * MARGIN;
+        int cols = Math.max(1, Math.min(3, (availW - (8 + 4 + BAR_W + 8) + TILE_GAP) / (TILE_W + TILE_GAP)));
         int gridW = cols * TILE_W + (cols - 1) * TILE_GAP;
-        int gridX = vx0 + (vx1 - vx0 - gridW) / 2;
-        boolean showShortcut = this.width >= SHORT_W + 12 + INV_W + 2 * MARGIN;
-        int groupW = showShortcut ? SHORT_W + 12 + INV_W : INV_W;
-        int groupX = (this.width - groupW) / 2;
+        int panelW = 8 + gridW + 4 + BAR_W + 8; // the panel ends where the pages and the scrollbar end
+        int ux0 = (this.width - panelW) / 2, ux1 = ux0 + panelW, uy0 = MARGIN;
+        int uy1 = Math.max(uy0 + 100, this.height - MARGIN - INV_H - 8);
+        int vx0 = ux0 + 8, vx1 = vx0 + gridW, vy0 = uy0 + 8, vy1 = uy1 - 8;
+
+        int invX = (this.width - INV_W) / 2; // the inventory is centered at the bottom
         int by = uy1 + 8;
-        return new Layout(ux0, uy0, ux1, uy1, vx0, vy0, vx1, vy1, cols, gridX,
-                showShortcut ? groupX + SHORT_W + 12 : groupX, by, showShortcut, groupX, by);
+        int shortX = invX - 12 - SHORT_W;     // the shortcuts sit to the left of it, if there is room
+        return new Layout(ux0, uy0, ux1, uy1, vx0, vy0, vx1, vy1, cols, vx0, invX, by, shortX >= MARGIN, shortX, by);
     }
 
+    /** The rows of storage slots of a page: the first row of the menu holds buttons and is not shown. */
     private int rowsOf(String key) {
-        if (selected != null && chest != null && key.equals(selected.key())) return chest.getRowCount();
-        StoragePage page = StorageCache.peek(key);
-        if (page != null) return page.rows;
-        return key.startsWith("EC") ? 5 : 3;
+        int total;
+        if (selected != null && chest != null && key.equals(selected.key())) {
+            total = chest.getRowCount();
+        } else {
+            StoragePage page = StorageCache.peek(key);
+            total = page != null ? page.rows : key.startsWith("EC") ? 6 : 4;
+        }
+        return Math.max(1, total - 1);
     }
 
     private int tileHeight(String key) {
@@ -258,12 +263,13 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
                 boolean fullyVisible = sy >= viewTop && sy + CELL <= viewBottom;
                 TrackerHud.rrect(g, sx, sy, sx + CELL, sy + CELL, SLOT_BG);
 
-                ItemStack stack = isSelected && idx < pageSlots.size() ? pageSlots.get(idx).getItem()
-                        : page != null && idx < page.stacks.length ? page.stacks[idx] : ItemStack.EMPTY;
-                boolean match = !query.isEmpty() && page != null && idx < page.search.length && page.search[idx].contains(query);
+                int src = idx + 9; // the first row of the menu (the buttons) is skipped
+                ItemStack stack = isSelected && src < pageSlots.size() ? pageSlots.get(src).getItem()
+                        : page != null && src < page.stacks.length ? page.stacks[src] : ItemStack.EMPTY;
+                boolean match = !query.isEmpty() && page != null && src < page.search.length && page.search[src].contains(query);
 
-                if (isSelected && idx < pageSlots.size() && fullyVisible) {
-                    place(pageSlots.get(idx), sx + 1, sy + 1); // the real slot sits here
+                if (isSelected && src < pageSlots.size() && fullyVisible) {
+                    place(pageSlots.get(src), sx + 1, sy + 1); // the real slot sits here
                 } else if (!stack.isEmpty()) {
                     g.item(stack, sx + 1, sy + 1);
                     g.itemDecorations(this.font, stack, sx + 1, sy + 1);
