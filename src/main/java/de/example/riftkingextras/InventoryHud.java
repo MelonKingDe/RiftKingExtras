@@ -243,6 +243,7 @@ public final class InventoryHud {
 
         TrackerHud.rrect(g, 0, 0, W, H, 0xCC0E0E14);     // same panel as the other HUDs
         TrackerHud.border(g, 0, 0, W, H, 0x33FFFFFF);
+        GlowBorder.decorate(g, 0, 0, W, H, "inventory");
 
         // health and mana bars
         int barW = (W - 2 * PAD - 6) / 2;

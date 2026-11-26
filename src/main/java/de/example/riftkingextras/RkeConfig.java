@@ -42,6 +42,13 @@ public final class RkeConfig {
 
     public static volatile boolean showTracker = true; // the collection tracker HUD (and its player table)
     public static volatile int storageGuiScale = 0; // GUI scale while the storage overlay is open (0 = as in the game)
+    // Glowing border (shared by all features, each one can be switched off)
+    public static volatile boolean glowEnabled = false;
+    public static volatile boolean glowOuter = true;
+    public static volatile String glowColor = "#B060FF";
+    public static volatile int glowSeconds = 6; // seconds for one lap of the streaks
+    public static final java.util.Set<String> glowDisabled = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     public static volatile boolean storageOverlay = true; // the storage overlay (all pages, search)
     public static volatile boolean customMenus = true; // chest menus (SkyBlock menu, sacks, skills ...) in the RiftKingExtras style
     public static volatile boolean customInventory = true; // the inventory screen (E) in the RiftKingExtras style
@@ -93,7 +100,10 @@ public final class RkeConfig {
         float invScale = 1.0f;
         boolean invEnabled = true, invOnlySkyBlock = true, hideHotbar = true, hideVanillaBars = true, rarityBorders = true;
         boolean abilityTimers = true, customInventory = true, customMenus = true, storageOverlay = true, showTracker = true;
-        int socX = -1, socY = 150, socialRank = 0, storageGuiScale = 0;
+        int socX = -1, socY = 150, socialRank = 0, storageGuiScale = 0, glowSeconds = 6;
+        boolean glowEnabled = false, glowOuter = true;
+        String glowColor = "#B060FF";
+        List<String> glowDisabled = new ArrayList<>();
         float socScale = 1.0f;
         boolean showSocial = true;
         long socialTotal = -1;
@@ -125,6 +135,11 @@ public final class RkeConfig {
                     hideHotbar = d.hideHotbar; hideVanillaBars = d.hideVanillaBars; rarityBorders = d.rarityBorders;
                     abilityTimers = d.abilityTimers; customInventory = d.customInventory; customMenus = d.customMenus; storageOverlay = d.storageOverlay; showTracker = d.showTracker;
                     storageGuiScale = Math.max(0, Math.min(6, d.storageGuiScale));
+                    glowEnabled = d.glowEnabled; glowOuter = d.glowOuter;
+                    if (d.glowColor != null) glowColor = d.glowColor;
+                    glowSeconds = Math.max(2, Math.min(30, d.glowSeconds));
+                    glowDisabled.clear();
+                    if (d.glowDisabled != null) glowDisabled.addAll(d.glowDisabled);
                     socX = d.socX; socY = d.socY; showSocial = d.showSocial; socialTotal = d.socialTotal; socialRank = d.socialRank;
                     if (d.socScale >= 0.25f && d.socScale <= 2.0f) socScale = d.socScale;
                     if (d.equipment != null && d.equipment.length == 4) {
@@ -182,6 +197,8 @@ public final class RkeConfig {
             d.invOnlySkyBlock = invOnlySkyBlock; d.hideHotbar = hideHotbar; d.hideVanillaBars = hideVanillaBars;
             d.rarityBorders = rarityBorders;
             d.abilityTimers = abilityTimers; d.customInventory = customInventory; d.customMenus = customMenus; d.storageOverlay = storageOverlay; d.showTracker = showTracker; d.storageGuiScale = storageGuiScale;
+            d.glowEnabled = glowEnabled; d.glowOuter = glowOuter; d.glowColor = glowColor; d.glowSeconds = glowSeconds;
+            d.glowDisabled = new ArrayList<>(glowDisabled);
             socialTotal = SocialXp.DATA.total();
             socialRank = SocialXp.DATA.rank;
             d.socX = socX; d.socY = socY; d.socScale = socScale; d.showSocial = showSocial;

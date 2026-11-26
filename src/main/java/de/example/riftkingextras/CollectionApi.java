@@ -52,7 +52,17 @@ public final class CollectionApi {
             lastAttempt = now - INTERVAL_MS + RETRY_MS; // retry sooner after an error
         }
         SocialXp.sync(uuid);
+        if (RaceConfig.enabled) CollectionRace.refresh(uuid, mc.player.getName().getString());
         TrackedPlayers.syncAll();
+    }
+
+    /** Updates the collection race now (after its settings changed). */
+    static void raceRefreshNow() {
+        if (exec == null) return;
+        exec.execute(() -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) CollectionRace.refresh(mc.player.getUUID(), mc.player.getName().getString());
+        });
     }
 
     private static boolean syncOwn(UUID uuid) {

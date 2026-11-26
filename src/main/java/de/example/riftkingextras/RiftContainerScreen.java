@@ -138,6 +138,7 @@ public class RiftContainerScreen extends AbstractContainerScreen<ChestMenu> {
         // panel with the title in the header
         TrackerHud.rrect(g, l, t, l + W, t + panelHeight, PANEL);
         TrackerHud.border(g, l, t, l + W, t + panelHeight, 0x55FFFFFF);
+        GlowBorder.decorate(g, l, t, W, panelHeight, "menus");
         g.text(this.font, this.title, l + 8, t + 4, 0xFFFFFFFF, false);
         TrackerHud.rect(g, l + 6, t + TrackerHud.HEADER_H - 2, l + W - 6, t + TrackerHud.HEADER_H - 1,
                 TrackerHud.withAlpha(0xFFB060FF, 0x99));

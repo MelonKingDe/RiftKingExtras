@@ -140,7 +140,8 @@ Extras for Hypixel SkyBlock:
   last opened them (the server only sends a page when you open it, so pages never opened say "Not opened yet"). Under the
   panel: **shortcut** buttons for every page, a **search** over everything the mod has seen (name and lore; matches get a
   purple frame, everything else is dimmed, page headers show how many were found, and the view jumps to the first match),
-  and your **inventory** (move items in and out as in the normal storage). Pages are saved per SkyBlock profile in
+  and your **inventory** (move items in and out as in the normal storage). On a small GUI size more pages fit next to each
+  other (up to 9 columns). Pages are saved per SkyBlock profile in
   `config/riftkingextras/storage/`, so they are there after a restart. `/rke storage` opens the screen anywhere to look at the
   saved pages. Switch it off with "Storage overlay" under `/rke inventory`.
   - Every page shows its **45 storage slots**: the first row of the menu (the buttons) is hidden and not searched.
@@ -152,6 +153,18 @@ Extras for Hypixel SkyBlock:
     is the game's own GUI scale, so the whole screen gets smaller, not only the pages.
 - **Tracker HUD toggle:** "Tracker HUD: ON/OFF" in the main settings screen (`/rke`) hides the whole collection tracker
   HUD, including the player table. Its settings are kept.
+- **Collection race:** the HUD of the Collection Tracker mod, in this style. You against a rival (a player name, or the
+  number 1) in one collection, with a goal date. It shows both amounts, **GAP** (or **LEAD** if you are ahead), **NEED /
+  DAY** to catch up before the date, the days left, your progress against the rival's amount, your rank, and when it was
+  updated. The data comes from Elite every 5 minutes; your own amount is live if the same collection is also in your
+  tracker (under Collections). Set it up under `/rke race` ("Collection race..." in the settings): collection (typed
+  name, e.g. `Timite`, matched with the Elite leaderboards), rival (`top` or a name), goal date (`dd.MM.yyyy`); "Apply and
+  update now" saves and updates. `/rke race refresh` updates by hand.
+- **Glow border:** the glowing border of the Collection Tracker mod for **every feature**: a soft pulsing glow and light
+  streaks that run along the border of a panel. One main switch, one color (presets or any `#RRGGBB`), one speed, and each
+  feature can be switched off separately: tracker, Timewarp HUD, scoreboard, inventory HUD, music, Social XP, race,
+  inventory screen, menus and the storage overlay. Settings: `/rke glow` ("Glow border..." in the settings). It is
+  off by default.
 - **Tracked players:** add up to 6 player names (`/rke players`). The HUD shows a table with each player's collection,
   amount and rank and how much more (+) or less (-) you have than them. **Every player has his own collection**: click
   the collection button of a player to switch it, so player 1 can be on Timite while player 2 is on Agaricus Cap. A newly
@@ -249,6 +262,8 @@ The places most likely to need a fix:
 - `CollectionsScreen` / `TrackedPlayersScreen`: `EditBox.getValue()` / `setHint(...)`
 
 ## Credits
+The collection race and the glow border come from the Collection Tracker mod (also by MelonKingDe, MIT).
+
 The storage overlay is modeled after the storage overlay of Skysoft (GPL-3.0). RiftKingExtras only copies how it
 behaves, the code is its own and no code of Skysoft is used.
 

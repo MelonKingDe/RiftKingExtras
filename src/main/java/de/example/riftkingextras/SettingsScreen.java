@@ -90,6 +90,14 @@ public class SettingsScreen extends Screen {
                 btn -> this.minecraft.gui.setScreen(new HudEditScreen(this, HudKind.SOCIAL)))
                 .bounds(right, y + 144, w, 20).build());
 
+        this.addRenderableWidget(Button.builder(Component.literal("Collection race..."),
+                btn -> this.minecraft.gui.setScreen(new RaceScreen(this)))
+                .bounds(left, y + 168, w, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("Glow border..."),
+                btn -> this.minecraft.gui.setScreen(new GlowScreen(this)))
+                .bounds(right, y + 168, w, 20).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
                 .bounds(this.width / 2 - 75, this.height - 26, 150, 20).build());
     }

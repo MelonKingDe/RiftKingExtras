@@ -151,6 +151,7 @@ public final class MusicHud {
 
         TrackerHud.rrect(g, 0, 0, w, h, 0xCC0E0E14);   // same panel as the other HUDs
         TrackerHud.border(g, 0, 0, w, h, 0x33FFFFFF);
+        GlowBorder.decorate(g, 0, 0, w, h, "music");
 
         // header: brand, and on the right the state (paused, volume, or MUSIC)
         g.text(font, "RIFTKING", 8, 4, 0xFFFFFFFF, false);

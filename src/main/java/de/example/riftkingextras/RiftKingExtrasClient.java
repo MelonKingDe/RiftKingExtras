@@ -44,6 +44,7 @@ public class RiftKingExtrasClient implements ClientModInitializer {
         StatsTracker.init();
         MusicConfig.load();
         SocialXp.init();
+        RaceConfig.load();
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath(MOD_ID, "tracker"),
@@ -73,6 +74,11 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                 n -> n.equals("HEALTH_BAR") || n.equals("ARMOR_BAR") || n.equals("FOOD_BAR") || n.equals("MOUNT_HEALTH")
                         || n.equals("INFO_BAR") || n.equals("EXPERIENCE_LEVEL") || n.equals("OVERLAY_MESSAGE"),
                 InventoryHud::hidesStatusBars));
+
+        // Collection race HUD
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath(MOD_ID, "race"),
+                (graphics, tracker) -> RaceHud.render(graphics));
 
         // Social XP HUD
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
@@ -268,6 +274,14 @@ public class RiftKingExtrasClient implements ClientModInitializer {
                                             + MusicArt.info()));
                                     return 1;
                                 })))
+                        .then(ClientCommands.literal("race")
+                                .executes(ctx -> openScreen(RaceScreen::new))
+                                .then(ClientCommands.literal("refresh").executes(ctx -> {
+                                    CollectionApi.raceRefreshNow();
+                                    ctx.getSource().sendFeedback(Component.literal("Collection race update started."));
+                                    return 1;
+                                })))
+                        .then(ClientCommands.literal("glow").executes(ctx -> openScreen(GlowScreen::new)))
                         .then(ClientCommands.literal("storage")
                                 .executes(ctx -> openScreen(p -> {
                                     LocalPlayer me = Minecraft.getInstance().player;

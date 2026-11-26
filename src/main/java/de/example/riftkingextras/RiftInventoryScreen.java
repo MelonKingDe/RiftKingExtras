@@ -113,6 +113,7 @@ public class RiftInventoryScreen extends AbstractContainerScreen<InventoryMenu> 
         // panel and header, like the HUDs
         TrackerHud.rrect(g, l, t, l + W, t + H, PANEL);
         TrackerHud.border(g, l, t, l + W, t + H, 0x55FFFFFF);
+        GlowBorder.decorate(g, l, t, W, H, "invscreen");
         g.text(this.font, "RIFTKING", l + 8, t + 4, 0xFFFFFFFF, false);
         g.text(this.font, "EXTRAS", l + 8 + this.font.width("RIFTKING "), t + 4, ACCENT, false);
         String label = "INVENTORY";

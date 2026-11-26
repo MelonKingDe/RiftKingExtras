@@ -9,7 +9,8 @@ enum HudKind {
     SCOREBOARD("Move scoreboard HUD"),
     INVENTORY("Move inventory HUD"),
     MUSIC("Move music HUD"),
-    SOCIAL("Move Social XP HUD");
+    SOCIAL("Move Social XP HUD"),
+    RACE("Move race HUD");
 
     final String title;
 
@@ -25,6 +26,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invX;
             case MUSIC -> MusicConfig.x;
             case SOCIAL -> RkeConfig.socX;
+            case RACE -> RaceConfig.x;
         };
     }
 
@@ -36,6 +38,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invY;
             case MUSIC -> MusicConfig.y;
             case SOCIAL -> RkeConfig.socY;
+            case RACE -> RaceConfig.y;
         };
     }
 
@@ -47,6 +50,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invScale;
             case MUSIC -> MusicConfig.scale;
             case SOCIAL -> RkeConfig.socScale;
+            case RACE -> RaceConfig.scale;
         };
     }
 
@@ -58,6 +62,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invX = v;
             case MUSIC -> MusicConfig.x = v;
             case SOCIAL -> RkeConfig.socX = v;
+            case RACE -> RaceConfig.x = v;
         }
     }
 
@@ -69,6 +74,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invY = v;
             case MUSIC -> MusicConfig.y = v;
             case SOCIAL -> RkeConfig.socY = v;
+            case RACE -> RaceConfig.y = v;
         }
     }
 
@@ -80,6 +86,7 @@ enum HudKind {
             case INVENTORY -> RkeConfig.invScale = v;
             case MUSIC -> MusicConfig.scale = v;
             case SOCIAL -> RkeConfig.socScale = v;
+            case RACE -> RaceConfig.scale = v;
         }
     }
 
@@ -91,6 +98,7 @@ enum HudKind {
             case INVENTORY -> InventoryHud.scaledWidth();
             case MUSIC -> MusicHud.scaledWidth();
             case SOCIAL -> SocialHud.scaledWidth();
+            case RACE -> RaceHud.scaledWidth();
         };
     }
 
@@ -102,6 +110,7 @@ enum HudKind {
             case INVENTORY -> InventoryHud.scaledHeight();
             case MUSIC -> MusicHud.scaledHeight();
             case SOCIAL -> SocialHud.scaledHeight();
+            case RACE -> RaceHud.scaledHeight();
         };
     }
 
@@ -130,6 +139,7 @@ enum HudKind {
             case INVENTORY -> InventoryHud.draw(g, x, y);
             case MUSIC -> MusicHud.draw(g, x, y);
             case SOCIAL -> SocialHud.draw(g, x, y);
+            case RACE -> RaceHud.draw(g, x, y);
         }
     }
 
@@ -164,6 +174,11 @@ enum HudKind {
                 RkeConfig.socX = -1;
                 RkeConfig.socY = 150;
                 RkeConfig.socScale = 1.0f;
+            }
+            case RACE -> {
+                RaceConfig.x = 8;
+                RaceConfig.y = 190;
+                RaceConfig.scale = 1.0f;
             }
         }
     }

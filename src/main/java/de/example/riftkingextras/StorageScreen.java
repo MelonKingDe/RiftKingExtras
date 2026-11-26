@@ -78,7 +78,7 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
 
     private Layout layout() {
         int availW = this.width - 2 * MARGIN;
-        int cols = Math.max(1, Math.min(3, (availW - (8 + 4 + BAR_W + 8) + TILE_GAP) / (TILE_W + TILE_GAP)));
+        int cols = Math.max(1, Math.min(9, (availW - (8 + 4 + BAR_W + 8) + TILE_GAP) / (TILE_W + TILE_GAP))); // as many as fit
         int gridW = cols * TILE_W + (cols - 1) * TILE_GAP;
         int panelW = 8 + gridW + 4 + BAR_W + 8; // the panel ends where the pages and the scrollbar end
         int ux0 = (this.width - panelW) / 2, ux1 = ux0 + panelW, uy0 = MARGIN;
@@ -204,6 +204,7 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
         // upper panel
         TrackerHud.rrect(g, l.ux0(), l.uy0(), l.ux1(), l.uy1(), PANEL);
         TrackerHud.border(g, l.ux0(), l.uy0(), l.ux1(), l.uy1(), 0x55FFFFFF);
+        GlowBorder.decorate(g, l.ux0(), l.uy0(), l.ux1() - l.ux0(), l.uy1() - l.uy0(), "storage");
 
         // hide every real slot, then place the ones that are visible
         for (Slot s : this.menu.slots) place(s, -10000, -10000);
@@ -307,6 +308,7 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
         // your inventory (the real slots) with the search box above it
         TrackerHud.rrect(g, l.invX(), l.invY(), l.invX() + INV_W, l.invY() + INV_H, PANEL);
         TrackerHud.border(g, l.invX(), l.invY(), l.invX() + INV_W, l.invY() + INV_H, 0x55FFFFFF);
+        GlowBorder.decorate(g, l.invX(), l.invY(), INV_W, INV_H, "storage");
         for (Slot s : playerSlots) {
             int cs = s.getContainerSlot();
             int x, y;
@@ -332,6 +334,7 @@ public class StorageScreen extends AbstractContainerScreen<AbstractContainerMenu
         int sx = l.shortX(), sy = l.shortY();
         TrackerHud.rrect(g, sx, sy, sx + SHORT_W, sy + SHORT_H, PANEL);
         TrackerHud.border(g, sx, sy, sx + SHORT_W, sy + SHORT_H, 0x55FFFFFF);
+        GlowBorder.decorate(g, sx, sy, SHORT_W, SHORT_H, "storage");
         g.text(this.font, "SHORTCUT", sx + 8, sy + 4, TrackerHud.MUTED, false);
         for (int i = 0; i < keys.length; i++) {
             int[] pos = shortcutPos(l, i);

@@ -170,6 +170,7 @@ public final class ScoreboardHud {
 
         TrackerHud.rrect(g, 0, 0, w, h, 0xCC0E0E14);   // same panel as the other HUDs
         TrackerHud.border(g, 0, 0, w, h, 0x33FFFFFF);
+        GlowBorder.decorate(g, 0, 0, w, h, "scoreboard");
 
         // header: the title, with an accent colored line below it
         text(g, font, s.title(), alignedX(ScoreboardConfig.titleAlign, w, font.width(s.title())), 4, shadow);

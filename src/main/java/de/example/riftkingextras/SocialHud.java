@@ -70,6 +70,7 @@ public final class SocialHud {
 
         TrackerHud.rrect(g, 0, 0, w, h, 0xCC0E0E14);   // same panel as the other HUDs
         TrackerHud.border(g, 0, 0, w, h, 0x33FFFFFF);
+        GlowBorder.decorate(g, 0, 0, w, h, "social");
 
         // header
         g.text(font, "RIFTKING", 8, 4, 0xFFFFFFFF, false);

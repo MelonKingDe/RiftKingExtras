@@ -80,6 +80,7 @@ public class HudEditScreen extends Screen {
         RkeConfig.save();
         ScoreboardConfig.save();
         MusicConfig.save();
+        RaceConfig.save();
     }
 
     @Override
